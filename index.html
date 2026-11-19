@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Fiszki Angielski - Inteligentny System Powtórek</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,14 +12,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+        if (window.tailwind) {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ['Inter', 'sans-serif'],
+                        }
                     }
                 }
-            }
+            };
         }
     </script>
 
@@ -55,110 +57,125 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Hide scrollbar for compact horizontal mobile category strip */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
 
     <!-- Top Navigation & Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2 sm:py-3.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg shadow-sm">
                     EN
                 </div>
                 <div>
-                    <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Fiszki Angielski</h1>
+                    <h1 class="font-bold text-slate-900 text-sm sm:text-lg leading-tight">Fiszki</h1>
                     <p class="text-xs text-slate-500 hidden sm:block">Adaptacyjny algorytm powtórek • 3 kategorie</p>
                 </div>
             </div>
 
-            <!-- Mode & View Controls -->
-            <div class="flex items-center gap-2 flex-wrap">
+            <!-- Mode & View Controls (Compact single row on mobile) -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
                 <!-- Direction Selector -->
                 <select id="directionSelect" onchange="changeDirection(this.value)" title="Kierunek tłumaczenia"
-                    class="text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/70 text-slate-700 font-medium py-2 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer">
-                    <option value="pl-en">🇵🇱 PL ➔ 🇬🇧 EN</option>
-                    <option value="en-pl">🇬🇧 EN ➔ 🇵🇱 PL</option>
-                    <option value="mixed">🔀 Tryb mieszany</option>
+                    class="text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/70 text-slate-700 font-medium py-1.5 px-2 sm:py-2 sm:px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer">
+                    <option value="pl-en">🇵🇱➔🇬🇧</option>
+                    <option value="en-pl">🇬🇧➔🇵🇱</option>
+                    <option value="mixed">🔀 Mix</option>
                 </select>
 
                 <!-- Pause Study Button -->
-                <button onclick="pauseStudy()" id="pauseStudyBtn" title="Zapisz stan i zrób przerwę"
-                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold py-2 px-3.5 rounded-xl border border-amber-200 transition cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <button type="button" onclick="pauseStudy()" id="pauseStudyBtn" title="Zapisz stan i zrób przerwę"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold p-2 sm:py-2 sm:px-3.5 rounded-xl border border-amber-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Zrób przerwę</span>
+                    <span class="hidden sm:inline">Zrób przerwę</span>
                 </button>
 
                 <!-- Backup / Restore Button -->
-                <button onclick="openBackupModal()" title="Kopia zapasowa postępu (Zapisz / Wczytaj)"
-                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold py-2 px-3 rounded-xl border border-slate-200 transition cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <button type="button" onclick="openBackupModal()" title="Kopia zapasowa postępu (Zapisz / Wczytaj)"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold p-2 sm:py-2 sm:px-3 rounded-xl border border-slate-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     <span class="hidden md:inline">Kopia zapasowa</span>
                 </button>
 
                 <!-- Toggle Stats / List Modal Button -->
-                <button onclick="toggleStatsView()" id="toggleStatsBtn"
-                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 px-3.5 rounded-xl border border-indigo-200 transition cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <button type="button" onclick="toggleStatsView()" id="toggleStatsBtn" title="Statystyki i lista zwrotów"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-1.5 px-2.5 sm:py-2 sm:px-3.5 rounded-xl border border-indigo-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span id="toggleStatsText">Statystyki i lista</span>
+                    <span id="toggleStatsText" class="hidden sm:inline">Statystyki i lista</span>
+                    <span id="toggleStatsTextMobile" class="sm:hidden">Lista</span>
                 </button>
             </div>
         </div>
 
-        <!-- Category Switcher Bar (Independent states & progress per category) -->
-        <div class="bg-slate-50/90 border-t border-slate-200/80">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="categoryTabsContainer">
+        <!-- Category Switcher Bar (Single compact horizontal row on mobile, 3-column detailed cards on desktop) -->
+        <div class="bg-slate-50/95 border-t border-slate-200/80">
+            <div class="max-w-5xl mx-auto px-3 sm:px-6 py-1.5 sm:py-2.5">
+                <div class="flex sm:grid sm:grid-cols-3 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar" id="categoryTabsContainer">
                     <!-- Category 1: Podróże i transport -->
                     <button type="button" onclick="switchCategory('travel')" id="catTab-travel"
-                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs sm:text-sm font-bold text-slate-900 truncate">✈️ Podróże i transport</span>
-                            <span id="catBadge-travel" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0">0%</span>
+                        class="category-tab shrink-0 sm:shrink text-left py-1.5 px-2.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex items-center sm:flex-col sm:items-stretch justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs">
+                        <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap sm:truncate">
+                                ✈️ <span class="sm:hidden">Podróże</span><span class="hidden sm:inline">Podróże i transport</span>
+                            </span>
+                            <span id="catBadge-travel" class="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0">0%</span>
                         </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="hidden sm:flex items-center justify-between text-[11px] text-slate-500">
                             <span>40 fiszek</span>
                             <span id="catKnown-travel">Opanowane: 0/40</span>
                         </div>
-                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                        <div class="hidden sm:block w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                             <div id="catBar-travel" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </button>
 
                     <!-- Category 2: Zakupy i usługi -->
                     <button type="button" onclick="switchCategory('shopping')" id="catTab-shopping"
-                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate">🛍️ Zakupy i usługi</span>
-                            <span id="catBadge-shopping" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
+                        class="category-tab shrink-0 sm:shrink text-left py-1.5 px-2.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex items-center sm:flex-col sm:items-stretch justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
+                        <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap sm:truncate">
+                                🛍️ <span class="sm:hidden">Zakupy</span><span class="hidden sm:inline">Zakupy i usługi</span>
+                            </span>
+                            <span id="catBadge-shopping" class="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
                         </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="hidden sm:flex items-center justify-between text-[11px] text-slate-500">
                             <span>40 fiszek</span>
                             <span id="catKnown-shopping">Opanowane: 0/40</span>
                         </div>
-                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                        <div class="hidden sm:block w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                             <div id="catBar-shopping" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </button>
 
                     <!-- Category 3: Wszystkie (Połączone) -->
                     <button type="button" onclick="switchCategory('combined')" id="catTab-combined"
-                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate">📚 Wszystkie (Połączone)</span>
-                            <span id="catBadge-combined" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
+                        class="category-tab shrink-0 sm:shrink text-left py-1.5 px-2.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex items-center sm:flex-col sm:items-stretch justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
+                        <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 whitespace-nowrap sm:truncate">
+                                📚 <span class="sm:hidden">Wszystkie (80)</span><span class="hidden sm:inline">Wszystkie (Połączone)</span>
+                            </span>
+                            <span id="catBadge-combined" class="text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
                         </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="hidden sm:flex items-center justify-between text-[11px] text-slate-500">
                             <span>80 fiszek</span>
                             <span id="catKnown-combined">Opanowane: 0/80</span>
                         </div>
-                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                        <div class="hidden sm:block w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                             <div id="catBar-combined" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </button>
@@ -167,87 +184,87 @@
         </div>
 
         <!-- Global Mastery Progress Bar for Active Category -->
-        <div class="w-full bg-slate-100 h-1.5">
-            <div id="globalProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
+        <div class="w-full bg-slate-100 h-1">
+            <div id="globalProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-1 transition-all duration-500" style="width: 0%"></div>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between">
+    <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 flex flex-col justify-between">
 
         <!-- Welcome Back Banner (Shown when resuming previous progress) -->
-        <div id="welcomeBackBanner" class="hidden mb-4 bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-3 rounded-2xl items-center justify-between gap-3 shadow-sm">
-            <div class="flex items-center gap-2.5 text-xs sm:text-sm">
-                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">↻</span>
+        <div id="welcomeBackBanner" class="hidden mb-3 sm:mb-4 bg-indigo-50 border border-indigo-200 text-indigo-900 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl items-center justify-between gap-2 sm:gap-3 shadow-sm">
+            <div class="flex items-center gap-2 text-xs sm:text-sm">
+                <span class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0">↻</span>
                 <div>
-                    <p class="font-semibold">Witaj z powrotem! Wznowiono od miejsca, w którym skończyłeś.</p>
-                    <p id="welcomeBackSubtext" class="text-xs text-indigo-700/80">Ostatni zapis: przed chwilą</p>
+                    <p class="font-semibold leading-tight">Witaj z powrotem! Wznowiono naukę.</p>
+                    <p id="welcomeBackSubtext" class="text-[11px] sm:text-xs text-indigo-700/80">Ostatni zapis: przed chwilą</p>
                 </div>
             </div>
-            <button onclick="dismissWelcomeBanner()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition cursor-pointer shrink-0">
+            <button type="button" onclick="dismissWelcomeBanner()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded-lg hover:bg-indigo-100 transition cursor-pointer shrink-0">
                 Zamknij
             </button>
         </div>
 
         <!-- STUDY VIEW -->
-        <div id="studyView" class="flex-1 flex flex-col justify-between gap-6">
+        <div id="studyView" class="flex-1 flex flex-col justify-between gap-3 sm:gap-6">
             
             <!-- Live Stats Pill Row -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-3">
+                <div class="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Opanowanie</p>
-                        <p id="statMasteryPercent" class="text-lg sm:text-xl font-bold text-indigo-600">0%</p>
+                        <p class="text-[9px] sm:text-[11px] uppercase tracking-wider font-semibold text-slate-400">Postęp</p>
+                        <p id="statMasteryPercent" class="text-sm sm:text-xl font-bold text-indigo-600">0%</p>
                     </div>
-                    <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">★</div>
+                    <div class="hidden sm:flex w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 items-center justify-center text-sm font-bold">★</div>
                 </div>
 
-                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Umiem</p>
-                        <p id="statKnownCount" class="text-lg sm:text-xl font-bold text-emerald-600">0 / 40</p>
+                        <p class="text-[9px] sm:text-[11px] uppercase tracking-wider font-semibold text-slate-400">Umiem</p>
+                        <p id="statKnownCount" class="text-sm sm:text-xl font-bold text-emerald-600">0 / 40</p>
                     </div>
-                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">✓</div>
+                    <div class="hidden sm:flex w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 items-center justify-center text-sm font-bold">✓</div>
                 </div>
 
-                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Niepewne / Trudne</p>
-                        <p id="statHardCount" class="text-lg sm:text-xl font-bold text-amber-600">0</p>
+                        <p class="text-[9px] sm:text-[11px] uppercase tracking-wider font-semibold text-slate-400">Trudne</p>
+                        <p id="statHardCount" class="text-sm sm:text-xl font-bold text-amber-600">0</p>
                     </div>
-                    <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">!</div>
+                    <div class="hidden sm:flex w-8 h-8 rounded-full bg-amber-50 text-amber-600 items-center justify-center text-sm font-bold">!</div>
                 </div>
 
-                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                     <div>
-                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Powtórki w sesji</p>
-                        <p id="statSessionCount" class="text-lg sm:text-xl font-bold text-slate-700">0</p>
+                        <p class="text-[9px] sm:text-[11px] uppercase tracking-wider font-semibold text-slate-400">Sesja</p>
+                        <p id="statSessionCount" class="text-sm sm:text-xl font-bold text-slate-700">0</p>
                     </div>
-                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">↻</div>
+                    <div class="hidden sm:flex w-8 h-8 rounded-full bg-slate-100 text-slate-600 items-center justify-center text-sm font-bold">↻</div>
                 </div>
             </div>
 
             <!-- Flashcard Container -->
-            <div class="flex-1 flex flex-col items-center justify-center my-2">
+            <div class="flex-1 flex flex-col items-center justify-center my-0.5 sm:my-2">
                 <div class="w-full max-w-2xl perspective-1000">
                     <div id="flashcardInner" onclick="flipCard()" 
-                        class="relative w-full min-h-[300px] sm:min-h-[340px] transform-style-3d cursor-pointer select-none">
+                        class="relative w-full min-h-[215px] sm:min-h-[320px] transform-style-3d cursor-pointer select-none">
                         
                         <!-- FRONT FACE -->
-                        <div class="absolute inset-0 backface-hidden bg-white rounded-3xl border border-slate-200 shadow-lg hover:shadow-xl transition-shadow p-6 sm:p-10 flex flex-col justify-between">
+                        <div class="absolute inset-0 backface-hidden bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-md sm:shadow-lg hover:shadow-xl transition-shadow p-4 sm:p-10 flex flex-col justify-between">
                             <!-- Card Top Metadata -->
-                            <div class="flex items-center justify-between gap-2 flex-wrap">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span id="cardNumberBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">#1</span>
-                                    <span id="cardOriginBadge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">Podróże</span>
-                                    <span id="cardReasonBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700">Nowy zwrot</span>
+                            <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span id="cardNumberBadge" class="text-[11px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-100 text-slate-600">#1</span>
+                                    <span id="cardOriginBadge" class="hidden text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">Podróże</span>
+                                    <span id="cardReasonBadge" class="text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-indigo-50 text-indigo-700">Nowy zwrot</span>
                                 </div>
-                                <span id="frontLangLabel" class="text-xs font-bold uppercase tracking-wider text-slate-400">Polski</span>
+                                <span id="frontLangLabel" class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Polski</span>
                             </div>
 
                             <!-- Card Main Sentence -->
-                            <div class="my-auto py-4 text-center">
-                                <p id="frontText" class="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 leading-snug">
+                            <div class="my-auto py-2 sm:py-4 text-center">
+                                <p id="frontText" class="text-lg sm:text-2xl md:text-3xl font-bold text-slate-800 leading-snug">
                                     Ładowanie...
                                 </p>
                             </div>
@@ -255,25 +272,26 @@
                             <!-- Card Bottom Hint & Audio (if front is EN) -->
                             <div class="flex items-center justify-between pt-2 border-t border-slate-100">
                                 <button id="frontSpeakBtn" type="button" onclick="event.stopPropagation(); speakEnglish();" 
-                                    class="hidden items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition">
+                                    class="hidden items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl transition cursor-pointer">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                                     </svg>
                                     Odsłuchaj
                                 </button>
-                                <span class="text-xs text-slate-400 ml-auto flex items-center gap-1">
-                                    Kliknij fiszkę lub naciśnij <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 border border-slate-300 rounded">Spację</kbd>, aby odwrócić
+                                <span class="text-[11px] sm:text-xs text-slate-400 ml-auto flex items-center gap-1">
+                                    <span class="sm:hidden">Dotknij fiszkę, aby odwrócić</span>
+                                    <span class="hidden sm:inline">Kliknij fiszkę lub naciśnij <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 border border-slate-300 rounded">Spację</kbd>, aby odwrócić</span>
                                 </span>
                             </div>
                         </div>
 
                         <!-- BACK FACE -->
-                        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-900 text-white rounded-3xl border border-indigo-800/50 shadow-xl p-6 sm:p-10 flex flex-col justify-between">
+                        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-900 text-white rounded-2xl sm:rounded-3xl border border-indigo-800/50 shadow-xl p-4 sm:p-10 flex flex-col justify-between">
                             <!-- Top Row -->
                             <div class="flex items-center justify-between gap-2">
-                                <span id="backLangLabel" class="text-xs font-bold uppercase tracking-wider text-indigo-300">Angielski</span>
+                                <span id="backLangLabel" class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-indigo-300">Angielski</span>
                                 <button type="button" onclick="event.stopPropagation(); speakEnglish();" 
-                                    class="flex items-center gap-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl transition cursor-pointer">
+                                    class="flex items-center gap-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl transition cursor-pointer">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                                     </svg>
@@ -282,19 +300,19 @@
                             </div>
 
                             <!-- Translation Text -->
-                            <div class="my-auto py-4 text-center space-y-3">
-                                <p id="backText" class="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-snug">
-                                    Loading...
+                            <div class="my-auto py-2 sm:py-4 text-center space-y-1.5 sm:space-y-3">
+                                <p id="backText" class="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-snug">
+                                    ...
                                 </p>
-                                <p id="backReferenceText" class="text-xs sm:text-sm text-indigo-200/80 font-normal">
+                                <p id="backReferenceText" class="text-xs sm:text-sm text-indigo-200/80 font-normal line-clamp-2">
                                     ...
                                 </p>
                             </div>
 
                             <!-- Card Mastery History Footer -->
-                            <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs text-slate-400">
+                            <div class="flex items-center justify-between pt-2 border-t border-white/10 text-[11px] sm:text-xs text-slate-400">
                                 <span id="cardHistoryInfo">Próby: 0 | Poziom utrwalenia: 0/5</span>
-                                <span>Oceń swoją odpowiedź poniżej ↓</span>
+                                <span class="hidden sm:inline">Oceń swoją odpowiedź poniżej ↓</span>
                             </div>
                         </div>
 
@@ -306,42 +324,42 @@
             <div class="w-full max-w-2xl mx-auto">
                 <!-- Prompt before flip -->
                 <div id="revealPromptArea" class="flex justify-center">
-                    <button onclick="flipCard()" 
-                        class="w-full sm:w-auto min-w-[240px] bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold py-3.5 px-8 rounded-2xl shadow-md shadow-indigo-200 transition cursor-pointer text-base">
+                    <button type="button" onclick="flipCard()" 
+                        class="w-full sm:w-auto min-w-[240px] bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold py-3 sm:py-3.5 px-8 rounded-2xl shadow-md shadow-indigo-200 transition cursor-pointer text-sm sm:text-base">
                         Pokaż odpowiedź
                     </button>
                 </div>
 
-                <!-- 3 Rating Buttons after flip -->
-                <div id="ratingButtonsArea" class="hidden grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- 3 Rating Buttons after flip (3 columns even on mobile) -->
+                <div id="ratingButtonsArea" class="hidden grid-cols-3 gap-2 sm:gap-3">
                     <!-- Option 1: Nie umiem -->
-                    <button onclick="rateCard('hard')" 
-                        class="group flex flex-col items-center justify-center bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-2 border-rose-200 hover:border-rose-600 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
-                        <div class="flex items-center gap-2 font-bold text-base">
+                    <button type="button" onclick="rateCard('hard')" 
+                        class="group flex flex-col items-center justify-center bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-2 border-rose-200 hover:border-rose-600 py-2.5 px-1.5 sm:p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-xs active:scale-[0.98]">
+                        <div class="flex items-center gap-1.5 font-bold text-xs sm:text-base text-center leading-tight">
                             <span>Nie umiem</span>
                             <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-rose-100 group-hover:bg-rose-500 text-rose-800 group-hover:text-white border border-rose-300 group-hover:border-rose-400">1</kbd>
                         </div>
-                        <span id="hintHard" class="text-[11px] opacity-80 mt-0.5 font-medium">Wróci za ~2 fiszki</span>
+                        <span id="hintHard" class="text-[10px] sm:text-[11px] opacity-80 mt-0.5 font-medium">za ~2 fiszki</span>
                     </button>
 
                     <!-- Option 2: Nie jestem pewien -->
-                    <button onclick="rateCard('unsure')" 
-                        class="group flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-500 text-amber-800 hover:text-white border-2 border-amber-200 hover:border-amber-500 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
-                        <div class="flex items-center gap-2 font-bold text-base">
+                    <button type="button" onclick="rateCard('unsure')" 
+                        class="group flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-500 text-amber-800 hover:text-white border-2 border-amber-200 hover:border-amber-500 py-2.5 px-1.5 sm:p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-xs active:scale-[0.98]">
+                        <div class="flex items-center gap-1.5 font-bold text-xs sm:text-base text-center leading-tight">
                             <span>Nie jestem pewien</span>
                             <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-100 group-hover:bg-amber-400 text-amber-900 group-hover:text-white border border-amber-300 group-hover:border-amber-300">2</kbd>
                         </div>
-                        <span id="hintUnsure" class="text-[11px] opacity-80 mt-0.5 font-medium">Wróci za ~5 fiszek</span>
+                        <span id="hintUnsure" class="text-[10px] sm:text-[11px] opacity-80 mt-0.5 font-medium">za ~5 fiszek</span>
                     </button>
 
                     <!-- Option 3: Umiem -->
-                    <button onclick="rateCard('known')" 
-                        class="group flex flex-col items-center justify-center bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
-                        <div class="flex items-center gap-2 font-bold text-base">
+                    <button type="button" onclick="rateCard('known')" 
+                        class="group flex flex-col items-center justify-center bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 py-2.5 px-1.5 sm:p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-xs active:scale-[0.98]">
+                        <div class="flex items-center gap-1.5 font-bold text-xs sm:text-base text-center leading-tight">
                             <span>Umiem</span>
                             <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 group-hover:bg-emerald-500 text-emerald-800 group-hover:text-white border border-emerald-300 group-hover:border-emerald-400">3</kbd>
                         </div>
-                        <span id="hintKnown" class="text-[11px] opacity-80 mt-0.5 font-medium">Przypomnienie za ~10 fiszek</span>
+                        <span id="hintKnown" class="text-[10px] sm:text-[11px] opacity-80 mt-0.5 font-medium">za ~9 fiszek</span>
                     </button>
                 </div>
             </div>
@@ -385,7 +403,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                    <button onclick="resumeStudy()" 
+                    <button type="button" onclick="resumeStudy()" 
                         class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold py-3.5 px-6 rounded-2xl shadow-md shadow-indigo-200 transition cursor-pointer flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -394,7 +412,7 @@
                         <span>Wznów naukę</span>
                     </button>
 
-                    <button onclick="openBackupModal()" 
+                    <button type="button" onclick="openBackupModal()" 
                         class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3.5 px-5 rounded-2xl border border-slate-200 transition cursor-pointer text-sm">
                         Zapisz / Wczytaj postęp
                     </button>
@@ -415,7 +433,7 @@
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="toggleStatsView()" 
+                        <button type="button" onclick="toggleStatsView()" 
                             class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold py-2 px-4 rounded-xl transition cursor-pointer">
                             Wróć do nauki
                         </button>
@@ -425,22 +443,22 @@
                 <!-- Filter & Reset Toolbar -->
                 <div class="flex flex-wrap items-center justify-between gap-3 my-4">
                     <div class="flex flex-wrap items-center gap-1.5" id="filterButtons">
-                        <button onclick="setListFilter('all')" data-filter="all" id="filterAllBtn" class="filter-btn bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Wszystkie (40)</button>
-                        <button onclick="setListFilter('hard')" data-filter="hard" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Trudne / Do nauki</button>
-                        <button onclick="setListFilter('unsure')" data-filter="unsure" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Niepewne</button>
-                        <button onclick="setListFilter('known')" data-filter="known" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Opanowane</button>
+                        <button type="button" onclick="setListFilter('all')" data-filter="all" id="filterAllBtn" class="filter-btn bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Wszystkie (40)</button>
+                        <button type="button" onclick="setListFilter('hard')" data-filter="hard" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Trudne / Do nauki</button>
+                        <button type="button" onclick="setListFilter('unsure')" data-filter="unsure" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Niepewne</button>
+                        <button type="button" onclick="setListFilter('known')" data-filter="known" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Opanowane</button>
                     </div>
 
-                    <!-- Safe Two-Step Reset Button for Active Category (no confirm()) -->
+                    <!-- Safe Two-Step Reset Button for Active Category -->
                     <div id="resetContainer">
-                        <button id="resetStep1Btn" onclick="promptReset()" 
+                        <button type="button" id="resetStep1Btn" onclick="promptReset()" 
                             class="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition cursor-pointer">
                             Resetuj tę kategorię
                         </button>
                         <div id="resetConfirmBox" class="hidden items-center gap-1.5">
                             <span class="text-xs font-semibold text-rose-700">Wyzerować tę kategorię?</span>
-                            <button onclick="executeReset()" class="text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-lg hover:bg-rose-700 cursor-pointer">Tak</button>
-                            <button onclick="cancelReset()" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg hover:bg-slate-300 cursor-pointer">Anuluj</button>
+                            <button type="button" onclick="executeReset()" class="text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-lg hover:bg-rose-700 cursor-pointer">Tak</button>
+                            <button type="button" onclick="cancelReset()" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg hover:bg-slate-300 cursor-pointer">Anuluj</button>
                         </div>
                     </div>
                 </div>
@@ -468,27 +486,27 @@
 
     <!-- Backup / Restore Modal -->
     <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-fade-in">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="text-lg font-bold text-slate-900">Zapisz lub wczytaj postęp nauki</h3>
                     <p class="text-xs text-slate-500">Kopia obejmuje oddzielne postępy dla wszystkich 3 kategorii jednocześnie.</p>
                 </div>
-                <button onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer">✕</button>
+                <button type="button" onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer">✕</button>
             </div>
 
             <!-- Export Section -->
             <div class="space-y-2.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">1. Eksportuj aktualny postęp</label>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="downloadBackupFile()" 
+                    <button type="button" onclick="downloadBackupFile()" 
                         class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Pobierz plik (.json)
                     </button>
-                    <button onclick="copyBackupCode()" 
+                    <button type="button" onclick="copyBackupCode()" 
                         class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl border border-slate-200 transition cursor-pointer flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -517,7 +535,7 @@
                 <div class="flex gap-2">
                     <input type="text" id="importCodeInput" placeholder="Lub wklej tutaj skopiowany kod postępu..." 
                         class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <button onclick="importFromCode()" 
+                    <button type="button" onclick="importFromCode()" 
                         class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer shrink-0">
                         Wczytaj
                     </button>
@@ -656,7 +674,6 @@
 
         /**
          * Global Multi-Category Application State
-         * Each category holds its own completely isolated learning state, weights, queue, pause flag & active card.
          */
         let appState = {
             activeCategory: 'travel',
@@ -669,9 +686,38 @@
         };
 
         /**
+         * Safe localStorage wrapper (handles Safari private mode, sandboxed iframes, quota errors)
+         */
+        function safeGetStorage(key) {
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    return window.localStorage.getItem(key);
+                }
+            } catch (err) {
+                console.warn('localStorage get blocked:', err);
+            }
+            return null;
+        }
+
+        function safeSetStorage(key, value) {
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem(key, value);
+                    return true;
+                }
+            } catch (err) {
+                console.warn('localStorage set blocked:', err);
+            }
+            return false;
+        }
+
+        /**
          * Helper to get the currently active category's isolated state object
          */
         function getActiveCatState() {
+            if (!appState.categories[appState.activeCategory]) {
+                appState.categories[appState.activeCategory] = createInitialCategoryState(appState.activeCategory);
+            }
             return appState.categories[appState.activeCategory];
         }
 
@@ -716,26 +762,42 @@
          * Validates and normalizes a loaded category state object
          */
         function hydrateCategoryState(catKey, rawCatState) {
-            const expectedLen = CATEGORIES[catKey].sentences.length;
+            const defaultSentences = CATEGORIES[catKey].sentences;
+            const expectedLen = defaultSentences.length;
+
             if (rawCatState && Array.isArray(rawCatState.cards) && rawCatState.cards.length === expectedLen) {
-                // Ensure origin tags remain intact
-                const defaultSentences = CATEGORIES[catKey].sentences;
-                const mergedCards = rawCatState.cards.map((c, i) => ({
-                    ...c,
-                    pl: defaultSentences[i].pl,
-                    en: defaultSentences[i].en,
-                    origin: defaultSentences[i].origin
-                }));
+                const mergedCards = rawCatState.cards.map((c, i) => {
+                    const safeCard = (c && typeof c === 'object') ? c : {};
+                    return {
+                        id: defaultSentences[i].id,
+                        pl: defaultSentences[i].pl,
+                        en: defaultSentences[i].en,
+                        origin: defaultSentences[i].origin,
+                        status: ['new', 'hard', 'unsure', 'known'].includes(safeCard.status) ? safeCard.status : 'new',
+                        masteryLevel: Number.isFinite(safeCard.masteryLevel) ? Math.max(0, Math.min(5, safeCard.masteryLevel)) : 0,
+                        weight: Number.isFinite(safeCard.weight) && safeCard.weight > 0 ? safeCard.weight : 4.0,
+                        dueStep: Number.isFinite(safeCard.dueStep) ? safeCard.dueStep : 0,
+                        attempts: Number.isFinite(safeCard.attempts) ? safeCard.attempts : 0,
+                        hardCount: Number.isFinite(safeCard.hardCount) ? safeCard.hardCount : 0,
+                        unsureCount: Number.isFinite(safeCard.unsureCount) ? safeCard.unsureCount : 0,
+                        knownCount: Number.isFinite(safeCard.knownCount) ? safeCard.knownCount : 0
+                    };
+                });
+
+                const validCardId = mergedCards.some(c => c.id === rawCatState.currentCardId)
+                    ? rawCatState.currentCardId
+                    : null;
+
                 return {
                     cards: mergedCards,
-                    globalStep: rawCatState.globalStep || 0,
-                    sessionReviews: 0, // Reset live session counter on page reload
-                    direction: rawCatState.direction || 'pl-en',
-                    currentCardId: rawCatState.currentCardId || null,
-                    currentCardFrontLang: rawCatState.currentCardFrontLang || 'pl',
+                    globalStep: Number.isFinite(rawCatState.globalStep) ? rawCatState.globalStep : 0,
+                    sessionReviews: 0,
+                    direction: ['pl-en', 'en-pl', 'mixed'].includes(rawCatState.direction) ? rawCatState.direction : 'pl-en',
+                    currentCardId: validCardId,
+                    currentCardFrontLang: ['pl', 'en'].includes(rawCatState.currentCardFrontLang) ? rawCatState.currentCardFrontLang : 'pl',
                     isFlipped: Boolean(rawCatState.isFlipped),
                     isPaused: Boolean(rawCatState.isPaused),
-                    lastSavedAt: rawCatState.lastSavedAt || null
+                    lastSavedAt: typeof rawCatState.lastSavedAt === 'string' ? rawCatState.lastSavedAt : null
                 };
             }
             return createInitialCategoryState(catKey);
@@ -750,7 +812,7 @@
             appState.categories.combined = createInitialCategoryState('combined');
 
             try {
-                const savedMulti = localStorage.getItem(MULTI_STORAGE_KEY);
+                const savedMulti = safeGetStorage(MULTI_STORAGE_KEY);
                 if (savedMulti) {
                     const parsed = JSON.parse(savedMulti);
                     if (parsed && parsed.categories) {
@@ -764,7 +826,7 @@
                 }
 
                 // Fallback migration from v1 single-category storage ("travel")
-                const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
+                const legacySaved = safeGetStorage(LEGACY_STORAGE_KEY);
                 if (legacySaved) {
                     const parsedLegacy = JSON.parse(legacySaved);
                     appState.categories.travel = hydrateCategoryState('travel', parsedLegacy);
@@ -786,16 +848,27 @@
                 const active = getActiveCatState();
                 active.lastSavedAt = new Date().toISOString();
 
+                const serializeCat = (cat) => ({
+                    cards: cat.cards,
+                    globalStep: cat.globalStep,
+                    direction: cat.direction,
+                    currentCardId: cat.currentCardId,
+                    currentCardFrontLang: cat.currentCardFrontLang,
+                    isFlipped: cat.isFlipped,
+                    isPaused: cat.isPaused,
+                    lastSavedAt: cat.lastSavedAt
+                });
+
                 const payload = {
                     version: 2,
                     activeCategory: appState.activeCategory,
                     categories: {
-                        travel: { ...appState.categories.travel, sessionReviews: undefined },
-                        shopping: { ...appState.categories.shopping, sessionReviews: undefined },
-                        combined: { ...appState.categories.combined, sessionReviews: undefined }
+                        travel: serializeCat(appState.categories.travel),
+                        shopping: serializeCat(appState.categories.shopping),
+                        combined: serializeCat(appState.categories.combined)
                     }
                 };
-                localStorage.setItem(MULTI_STORAGE_KEY, JSON.stringify(payload));
+                safeSetStorage(MULTI_STORAGE_KEY, JSON.stringify(payload));
             } catch (e) {
                 console.warn('Nie udało się zapisać postępu:', e);
             }
@@ -813,13 +886,14 @@
             saveAllState();
 
             const state = getActiveCatState();
-            document.getElementById('directionSelect').value = state.direction;
+            const dirSelect = document.getElementById('directionSelect');
+            if (dirSelect) dirSelect.value = state.direction;
 
             updateCategoryTabsUI();
             updateDashboardStats();
 
             const statsView = document.getElementById('statsView');
-            const isStatsOpen = !statsView.classList.contains('hidden');
+            const isStatsOpen = statsView && !statsView.classList.contains('hidden');
 
             if (isStatsOpen) {
                 setListFilter('all');
@@ -834,9 +908,13 @@
                     }
                     pauseStudy();
                 } else {
-                    document.getElementById('pausedView').classList.add('hidden');
-                    document.getElementById('pausedView').classList.remove('flex');
-                    document.getElementById('studyView').classList.remove('hidden');
+                    const pausedView = document.getElementById('pausedView');
+                    const studyView = document.getElementById('studyView');
+                    if (pausedView) {
+                        pausedView.classList.add('hidden');
+                        pausedView.classList.remove('flex');
+                    }
+                    if (studyView) studyView.classList.remove('hidden');
 
                     if (state.currentCardId) {
                         restoreCardUIState();
@@ -855,6 +933,8 @@
         function updateCategoryTabsUI() {
             ['travel', 'shopping', 'combined'].forEach(catKey => {
                 const catState = appState.categories[catKey];
+                if (!catState) return;
+
                 const total = catState.cards.length;
                 const knownCount = catState.cards.filter(c => c.status === 'known').length;
                 const totalMasteryPoints = catState.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
@@ -865,59 +945,69 @@
                 const knownEl = document.getElementById(`catKnown-${catKey}`);
                 const barEl = document.getElementById(`catBar-${catKey}`);
 
-                badgeEl.textContent = `${masteryPercent}%`;
-                knownEl.textContent = `Opanowane: ${knownCount}/${total}`;
-                barEl.style.width = `${masteryPercent}%`;
+                if (badgeEl) badgeEl.textContent = `${masteryPercent}%`;
+                if (knownEl) knownEl.textContent = `Opanowane: ${knownCount}/${total}`;
+                if (barEl) barEl.style.width = `${masteryPercent}%`;
 
-                if (appState.activeCategory === catKey) {
-                    tabBtn.className = 'category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs';
-                    badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0';
-                } else {
-                    tabBtn.className = 'category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200';
-                    badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0';
+                if (tabBtn && badgeEl) {
+                    if (appState.activeCategory === catKey) {
+                        tabBtn.className = 'category-tab shrink-0 sm:shrink text-left py-1.5 px-2.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex items-center sm:flex-col sm:items-stretch justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs';
+                        badgeEl.className = 'text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0';
+                    } else {
+                        tabBtn.className = 'category-tab shrink-0 sm:shrink text-left py-1.5 px-2.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer flex items-center sm:flex-col sm:items-stretch justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200';
+                        badgeEl.className = 'text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0';
+                    }
                 }
             });
         }
 
         /**
-         * ADAPTIVE SPACED REPETITION & PRIORITY ALGORITHM (Runs independently per category)
+         * ADAPTIVE SPACED REPETITION & PRIORITY ALGORITHM
          */
         function selectNextCard() {
             const state = getActiveCatState();
+            const currentId = state.currentCardId;
             const step = state.globalStep;
-            
-            let pool = state.cards.filter(c => c.id !== state.currentCardId);
-            if (pool.length === 0) pool = [...state.cards];
 
-            let dueCards = pool.filter(c => c.dueStep <= step);
+            // 1. Filter cards that are currently due (dueStep <= globalStep)
+            let dueCards = state.cards.filter(c => c.dueStep <= step && c.id !== currentId);
 
+            // 2. Fallback: if all cards have future dueSteps, take the ones closest to becoming due
             if (dueCards.length === 0) {
-                pool.sort((a, b) => a.dueStep - b.dueStep);
-                dueCards = pool.slice(0, 6);
+                const otherCards = state.cards.filter(c => c.id !== currentId);
+                otherCards.sort((a, b) => a.dueStep - b.dueStep);
+                dueCards = otherCards.slice(0, Math.min(5, otherCards.length));
             }
 
-            const scoredCards = dueCards.map(card => {
-                const overdueSteps = Math.max(0, step - card.dueStep);
-                const overdueBoost = 1 + (overdueSteps * 0.12);
-                const troubleFactor = 1 + (card.hardCount * 0.35);
-                const finalScore = card.weight * overdueBoost * troubleFactor;
-                return { card, score: finalScore };
+            if (dueCards.length === 0) {
+                dueCards = state.cards;
+            }
+
+            // 3. Weighted Random Selection based on difficulty weight + overdue urgency
+            let totalWeight = 0;
+            const weightedPool = dueCards.map(card => {
+                const overdueBonus = Math.max(0, (step - card.dueStep) * 0.35);
+                const effectiveWeight = card.weight + overdueBonus;
+                totalWeight += effectiveWeight;
+                return { card, effectiveWeight };
             });
 
-            const totalScore = scoredCards.reduce((sum, item) => sum + item.score, 0);
-            let randomThreshold = Math.random() * totalScore;
-            let chosen = scoredCards[0].card;
+            let randomPoint = Math.random() * totalWeight;
+            let chosenCard = weightedPool[0].card;
 
-            for (const item of scoredCards) {
-                randomThreshold -= item.score;
-                if (randomThreshold <= 0) {
-                    chosen = item.card;
+            for (const entry of weightedPool) {
+                randomPoint -= entry.effectiveWeight;
+                if (randomPoint <= 0) {
+                    chosenCard = entry.card;
                     break;
                 }
             }
 
-            state.currentCardId = chosen.id;
+            // Set active card and reset flip state
+            state.currentCardId = chosenCard.id;
+            state.isFlipped = false;
 
+            // Determine display language based on selected direction
             if (state.direction === 'pl-en') {
                 state.currentCardFrontLang = 'pl';
             } else if (state.direction === 'en-pl') {
@@ -926,12 +1016,144 @@
                 state.currentCardFrontLang = Math.random() < 0.5 ? 'pl' : 'en';
             }
 
+            renderCurrentCard(chosenCard);
             saveAllState();
-            renderCurrentCard();
         }
 
         /**
-         * Updates card metrics after user rates their knowledge in the active category
+         * Restores the exact saved card and flip state without advancing the algorithm
+         */
+        function restoreCardUIState() {
+            const state = getActiveCatState();
+            let card = state.cards.find(c => c.id === state.currentCardId);
+            if (!card) {
+                selectNextCard();
+                return;
+            }
+
+            renderCurrentCard(card);
+
+            const inner = document.getElementById('flashcardInner');
+            const revealArea = document.getElementById('revealPromptArea');
+            const ratingArea = document.getElementById('ratingButtonsArea');
+
+            if (state.isFlipped) {
+                inner.classList.add('rotate-y-180');
+                revealArea.classList.add('hidden');
+                ratingArea.classList.remove('hidden');
+                ratingArea.classList.add('grid');
+            } else {
+                inner.classList.remove('rotate-y-180');
+                revealArea.classList.remove('hidden');
+                ratingArea.classList.add('hidden');
+                ratingArea.classList.remove('grid');
+            }
+        }
+
+        /**
+         * Updates card DOM elements with current sentence & algorithm insights
+         */
+        function renderCurrentCard(card) {
+            if (!card) return;
+            const state = getActiveCatState();
+            const inner = document.getElementById('flashcardInner');
+            const revealArea = document.getElementById('revealPromptArea');
+            const ratingArea = document.getElementById('ratingButtonsArea');
+
+            // Reset card visual flip to front
+            inner.classList.remove('rotate-y-180');
+            revealArea.classList.remove('hidden');
+            ratingArea.classList.add('hidden');
+            ratingArea.classList.remove('grid');
+
+            // Card number & origin badge (shown in combined mode)
+            const totalInCat = state.cards.length;
+            document.getElementById('cardNumberBadge').textContent = `#${card.id} / ${totalInCat}`;
+
+            const originBadge = document.getElementById('cardOriginBadge');
+            if (appState.activeCategory === 'combined') {
+                originBadge.textContent = card.origin === 'Podróże' ? '✈️ Podróże' : '🛍️ Zakupy';
+                originBadge.classList.remove('hidden');
+            } else {
+                originBadge.classList.add('hidden');
+            }
+
+            // Reason badge explaining why the algorithm chose this card
+            const reasonBadge = document.getElementById('cardReasonBadge');
+            if (card.status === 'new') {
+                reasonBadge.textContent = 'Nowy zwrot';
+                reasonBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-indigo-50 text-indigo-700';
+            } else if (card.status === 'hard') {
+                reasonBadge.textContent = 'Priorytet • Trudny zwrot';
+                reasonBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-rose-50 text-rose-700';
+            } else if (card.status === 'unsure') {
+                reasonBadge.textContent = 'Do utrwalenia';
+                reasonBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-amber-50 text-amber-700';
+            } else {
+                reasonBadge.textContent = `Powtórka utrwalająca (${card.masteryLevel}/5)`;
+                reasonBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-emerald-50 text-emerald-700';
+            }
+
+            // Set Front & Back text according to active language direction
+            const frontSpeakBtn = document.getElementById('frontSpeakBtn');
+            if (state.currentCardFrontLang === 'pl') {
+                document.getElementById('frontLangLabel').textContent = 'Polski';
+                document.getElementById('frontText').textContent = card.pl;
+
+                document.getElementById('backLangLabel').textContent = 'Angielski';
+                document.getElementById('backText').textContent = card.en;
+                document.getElementById('backReferenceText').textContent = card.pl;
+
+                frontSpeakBtn.classList.add('hidden');
+                frontSpeakBtn.classList.remove('flex');
+            } else {
+                document.getElementById('frontLangLabel').textContent = 'Angielski';
+                document.getElementById('frontText').textContent = card.en;
+
+                document.getElementById('backLangLabel').textContent = 'Polski';
+                document.getElementById('backText').textContent = card.pl;
+                document.getElementById('backReferenceText').textContent = card.en;
+
+                frontSpeakBtn.classList.remove('hidden');
+                frontSpeakBtn.classList.add('flex');
+            }
+
+            // Dynamic interval hints on the 3 buttons
+            const nextLevel = Math.min(5, card.masteryLevel + 1);
+            const nextIntervalMap = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
+            document.getElementById('hintKnown').textContent = `za ~${nextIntervalMap[nextLevel]} fiszek`;
+
+            document.getElementById('cardHistoryInfo').textContent = 
+                `Próby: ${card.attempts} • Poziom: ${card.masteryLevel}/5`;
+        }
+
+        /**
+         * Flips the flashcard between front and back
+         */
+        function flipCard() {
+            const state = getActiveCatState();
+            const inner = document.getElementById('flashcardInner');
+            const revealArea = document.getElementById('revealPromptArea');
+            const ratingArea = document.getElementById('ratingButtonsArea');
+
+            state.isFlipped = !state.isFlipped;
+
+            if (state.isFlipped) {
+                inner.classList.add('rotate-y-180');
+                revealArea.classList.add('hidden');
+                ratingArea.classList.remove('hidden');
+                ratingArea.classList.add('grid');
+            } else {
+                inner.classList.remove('rotate-y-180');
+                revealArea.classList.remove('hidden');
+                ratingArea.classList.add('hidden');
+                ratingArea.classList.remove('grid');
+            }
+            saveAllState();
+        }
+
+        /**
+         * Processes user's rating ('hard' | 'unsure' | 'known') for the active category
          */
         function rateCard(rating) {
             const state = getActiveCatState();
@@ -946,137 +1168,67 @@
                 card.status = 'hard';
                 card.hardCount += 1;
                 card.masteryLevel = 0;
-                card.weight = Math.min(20, 11 + card.hardCount * 1.5);
+                card.weight = Math.min(20, card.weight * 1.65 + 4.0);
                 card.dueStep = state.globalStep + 2 + Math.floor(Math.random() * 2);
-            } 
-            else if (rating === 'unsure') {
+            } else if (rating === 'unsure') {
                 card.status = 'unsure';
                 card.unsureCount += 1;
                 card.masteryLevel = Math.max(0, card.masteryLevel - 1);
-                card.weight = Math.min(14, 6.5 + card.hardCount * 0.8);
+                card.weight = Math.min(15, Math.max(4.5, card.weight * 1.25 + 1.5));
                 card.dueStep = state.globalStep + 5 + Math.floor(Math.random() * 2);
-            } 
-            else if (rating === 'known') {
+            } else if (rating === 'known') {
                 card.status = 'known';
                 card.knownCount += 1;
                 card.masteryLevel = Math.min(5, card.masteryLevel + 1);
+                card.weight = Math.max(1.0, card.weight * 0.52);
 
-                const intervalMap = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
-                const baseInterval = intervalMap[card.masteryLevel] || 10;
-                const jitter = Math.floor(Math.random() * 4);
-                card.dueStep = state.globalStep + baseInterval + jitter;
-                card.weight = Math.max(0.45, 2.4 - (card.masteryLevel * 0.4));
+                const intervalByLevel = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
+                const baseGap = intervalByLevel[card.masteryLevel] || 10;
+                const jitter = Math.floor(Math.random() * 4) - 1;
+                card.dueStep = state.globalStep + baseGap + jitter;
             }
 
             saveAllState();
+            updateCategoryTabsUI();
             updateDashboardStats();
-
-            const flashcardInner = document.getElementById('flashcardInner');
-            if (state.isFlipped) {
-                state.isFlipped = false;
-                flashcardInner.classList.remove('rotate-y-180');
-                document.getElementById('ratingButtonsArea').classList.add('hidden');
-                document.getElementById('ratingButtonsArea').classList.remove('grid');
-                document.getElementById('revealPromptArea').classList.remove('hidden');
-                
-                setTimeout(() => {
-                    selectNextCard();
-                }, 180);
-            } else {
-                selectNextCard();
-            }
+            selectNextCard();
         }
 
         /**
-         * Renders the active card onto the DOM
+         * Updates top statistics pills and progress bar for the active category
          */
-        function renderCurrentCard() {
+        function updateDashboardStats() {
             const state = getActiveCatState();
-            const totalInCat = state.cards.length;
-            const card = state.cards.find(c => c.id === state.currentCardId);
-            if (!card) return;
+            const total = state.cards.length;
+            const knownCount = state.cards.filter(c => c.status === 'known').length;
+            const hardOrUnsureCount = state.cards.filter(c => c.status === 'hard' || c.status === 'unsure').length;
 
-            const isPlFront = state.currentCardFrontLang === 'pl';
-            const frontText = isPlFront ? card.pl : card.en;
-            const backText = isPlFront ? card.en : card.pl;
+            const totalMasteryPoints = state.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
+            const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
 
-            document.getElementById('cardNumberBadge').textContent = `#${card.id} / ${totalInCat}`;
-            document.getElementById('frontLangLabel').textContent = isPlFront ? '🇵🇱 Polski' : '🇬🇧 Angielski';
-            document.getElementById('backLangLabel').textContent = isPlFront ? '🇬🇧 Angielski' : '🇵🇱 Polski';
+            document.getElementById('statMasteryPercent').textContent = `${masteryPercent}%`;
+            document.getElementById('statKnownCount').textContent = `${knownCount} / ${total}`;
+            document.getElementById('statHardCount').textContent = `${hardOrUnsureCount}`;
+            document.getElementById('statSessionCount').textContent = `${state.sessionReviews}`;
+            document.getElementById('globalProgressBar').style.width = `${masteryPercent}%`;
 
-            // Show origin badge when in the combined 80-card category
-            const originBadge = document.getElementById('cardOriginBadge');
-            if (appState.activeCategory === 'combined') {
-                originBadge.textContent = card.origin === 'Podróże' ? '✈️ Podróże' : '🛍️ Zakupy';
-                originBadge.classList.remove('hidden');
-            } else {
-                originBadge.classList.add('hidden');
-            }
-            
-            document.getElementById('frontText').textContent = frontText;
-            document.getElementById('backText').textContent = backText;
-            document.getElementById('backReferenceText').textContent = frontText;
-
-            const frontSpeakBtn = document.getElementById('frontSpeakBtn');
-            if (!isPlFront) {
-                frontSpeakBtn.classList.remove('hidden');
-                frontSpeakBtn.classList.add('flex');
-            } else {
-                frontSpeakBtn.classList.add('hidden');
-                frontSpeakBtn.classList.remove('flex');
-            }
-
-            const badge = document.getElementById('cardReasonBadge');
-            if (card.status === 'new') {
-                badge.textContent = 'Nowy zwrot';
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700';
-            } else if (card.status === 'hard') {
-                badge.textContent = 'Priorytet: Sprawiało trudność';
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700';
-            } else if (card.status === 'unsure') {
-                badge.textContent = 'Powtórka: Niepewne';
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700';
-            } else {
-                badge.textContent = 'Przypomnienie (Utrwalanie)';
-                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700';
-            }
-
-            const nextLevel = Math.min(5, card.masteryLevel + 1);
-            const nextIntervalMap = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
-            document.getElementById('hintKnown').textContent = `Przypomnienie za ~${nextIntervalMap[nextLevel]} fiszek`;
-
-            document.getElementById('cardHistoryInfo').textContent = 
-                `Próby: ${card.attempts} • Poziom utrwalenia: ${card.masteryLevel}/5`;
+            const catInfo = CATEGORIES[appState.activeCategory];
+            document.getElementById('statsViewTitle').textContent = `Analiza postępów: ${catInfo.name} (${total} zdań)`;
+            document.getElementById('filterAllBtn').textContent = `Wszystkie (${total})`;
         }
 
         /**
-         * Flips the flashcard between front and back
+         * Changes translation direction for the active category
          */
-        function flipCard() {
+        function changeDirection(newDir) {
             const state = getActiveCatState();
-            const flashcardInner = document.getElementById('flashcardInner');
-            const revealPromptArea = document.getElementById('revealPromptArea');
-            const ratingButtonsArea = document.getElementById('ratingButtonsArea');
-
-            state.isFlipped = !state.isFlipped;
-
-            if (state.isFlipped) {
-                flashcardInner.classList.add('rotate-y-180');
-                revealPromptArea.classList.add('hidden');
-                ratingButtonsArea.classList.remove('hidden');
-                ratingButtonsArea.classList.add('grid');
-            } else {
-                flashcardInner.classList.remove('rotate-y-180');
-                ratingButtonsArea.classList.add('hidden');
-                ratingButtonsArea.classList.remove('grid');
-                revealPromptArea.classList.remove('hidden');
-            }
-
+            state.direction = newDir;
             saveAllState();
+            selectNextCard();
         }
 
         /**
-         * Text-to-Speech (Web Speech API) for English pronunciation
+         * Uses browser SpeechSynthesis API to pronounce the English sentence
          */
         function speakEnglish() {
             const state = getActiveCatState();
@@ -1084,52 +1236,22 @@
             if (!card) return;
 
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(card.en);
-                utterance.lang = 'en-GB';
-                utterance.rate = 0.95;
-                window.speechSynthesis.speak(utterance);
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(card.en);
+                    utterance.lang = 'en-GB';
+                    utterance.rate = 0.95;
+                    window.speechSynthesis.speak(utterance);
+                } catch (e) {
+                    showToast('Syntezator mowy niedostępny w tej przeglądarce.');
+                }
             } else {
                 showToast('Twoja przeglądarka nie obsługuje syntezatora mowy.');
             }
         }
 
         /**
-         * Updates top dashboard counters, category tabs, and global progress bar
-         */
-        function updateDashboardStats() {
-            const state = getActiveCatState();
-            const total = state.cards.length;
-            const knownCards = state.cards.filter(c => c.status === 'known').length;
-            const hardOrUnsure = state.cards.filter(c => c.status === 'hard' || c.status === 'unsure').length;
-            
-            const totalMasteryPoints = state.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
-            const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
-
-            document.getElementById('statMasteryPercent').textContent = `${masteryPercent}%`;
-            document.getElementById('statKnownCount').textContent = `${knownCards} / ${total}`;
-            document.getElementById('statHardCount').textContent = `${hardOrUnsure}`;
-            document.getElementById('statSessionCount').textContent = `${state.sessionReviews}`;
-            document.getElementById('globalProgressBar').style.width = `${masteryPercent}%`;
-
-            updateCategoryTabsUI();
-        }
-
-        /**
-         * Direction change handler for active category
-         */
-        function changeDirection(newDir) {
-            const state = getActiveCatState();
-            state.direction = newDir;
-            saveAllState();
-            if (state.isFlipped) {
-                flipCard();
-            }
-            selectNextCard();
-        }
-
-        /**
-         * Toggles between Flashcard Study View and Stats/All Phrases List View
+         * Toggles between Study View and Statistics/List View
          */
         function toggleStatsView() {
             const state = getActiveCatState();
@@ -1137,6 +1259,7 @@
             const pausedView = document.getElementById('pausedView');
             const statsView = document.getElementById('statsView');
             const btnText = document.getElementById('toggleStatsText');
+            const btnTextMobile = document.getElementById('toggleStatsTextMobile');
 
             const isStatsHidden = statsView.classList.contains('hidden');
             if (isStatsHidden) {
@@ -1146,6 +1269,7 @@
                 statsView.classList.remove('hidden');
                 statsView.classList.add('flex');
                 btnText.textContent = 'Wróć do fiszek';
+                if (btnTextMobile) btnTextMobile.textContent = 'Fiszki';
                 renderPhrasesTable();
             } else {
                 statsView.classList.add('hidden');
@@ -1157,6 +1281,7 @@
                     studyView.classList.remove('hidden');
                 }
                 btnText.textContent = 'Statystyki i lista';
+                if (btnTextMobile) btnTextMobile.textContent = 'Lista';
                 cancelReset();
             }
         }
@@ -1173,11 +1298,13 @@
             const statsView = document.getElementById('statsView');
             const pausedView = document.getElementById('pausedView');
             const btnText = document.getElementById('toggleStatsText');
+            const btnTextMobile = document.getElementById('toggleStatsTextMobile');
 
             studyView.classList.add('hidden');
             statsView.classList.add('hidden');
             statsView.classList.remove('flex');
             btnText.textContent = 'Statystyki i lista';
+            if (btnTextMobile) btnTextMobile.textContent = 'Lista';
 
             pausedView.classList.remove('hidden');
             pausedView.classList.add('flex');
@@ -1185,72 +1312,40 @@
             const total = state.cards.length;
             const totalMasteryPoints = state.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
             const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
+            const activeCard = state.cards.find(c => c.id === state.currentCardId);
 
             document.getElementById('pausedCategoryName').textContent = CATEGORIES[appState.activeCategory].name;
-            document.getElementById('pausedCardInfo').textContent = `#${state.currentCardId || 1} / ${total}`;
+            document.getElementById('pausedCardInfo').textContent = activeCard ? `#${activeCard.id} / ${total}` : `#1 / ${total}`;
             document.getElementById('pausedSessionReviews').textContent = `${state.sessionReviews}`;
             document.getElementById('pausedMasteryPercent').textContent = `${masteryPercent}%`;
-            document.getElementById('pausedTimestamp').textContent = formatTimestamp(state.lastSavedAt);
+            document.getElementById('pausedTimestamp').textContent = formatTimeShort(state.lastSavedAt);
+
+            showToast('Nauka wstrzymana. Postęp został zapisany.');
         }
 
         /**
-         * Resume Study Session right where the user left off in the active category
+         * Resume Study Session for Active Category
          */
         function resumeStudy() {
             const state = getActiveCatState();
             state.isPaused = false;
             saveAllState();
 
-            const pausedView = document.getElementById('pausedView');
-            const studyView = document.getElementById('studyView');
+            document.getElementById('pausedView').classList.add('hidden');
+            document.getElementById('pausedView').classList.remove('flex');
+            document.getElementById('statsView').classList.add('hidden');
+            document.getElementById('statsView').classList.remove('flex');
+            document.getElementById('studyView').classList.remove('hidden');
+            document.getElementById('toggleStatsText').textContent = 'Statystyki i lista';
+            const btnTextMobile = document.getElementById('toggleStatsTextMobile');
+            if (btnTextMobile) btnTextMobile.textContent = 'Lista';
 
-            pausedView.classList.add('hidden');
-            pausedView.classList.remove('flex');
-            studyView.classList.remove('hidden');
-
-            restoreCardUIState();
-            showToast(`Wznowiono (${CATEGORIES[appState.activeCategory].shortName}) od fiszki #${state.currentCardId}`);
-        }
-
-        /**
-         * Restores visual flip state and buttons for the current card
-         */
-        function restoreCardUIState() {
-            const state = getActiveCatState();
-            renderCurrentCard();
-            const flashcardInner = document.getElementById('flashcardInner');
-            const revealPromptArea = document.getElementById('revealPromptArea');
-            const ratingButtonsArea = document.getElementById('ratingButtonsArea');
-
-            if (state.isFlipped) {
-                flashcardInner.classList.add('rotate-y-180');
-                revealPromptArea.classList.add('hidden');
-                ratingButtonsArea.classList.remove('hidden');
-                ratingButtonsArea.classList.add('grid');
+            if (state.currentCardId) {
+                restoreCardUIState();
             } else {
-                flashcardInner.classList.remove('rotate-y-180');
-                ratingButtonsArea.classList.add('hidden');
-                ratingButtonsArea.classList.remove('grid');
-                revealPromptArea.classList.remove('hidden');
+                selectNextCard();
             }
-        }
-
-        /**
-         * Formats ISO timestamp into readable Polish time/date string
-         */
-        function formatTimestamp(isoString) {
-            if (!isoString) return 'Teraz';
-            try {
-                const date = new Date(isoString);
-                return date.toLocaleString('pl-PL', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (e) {
-                return 'Zapisano';
-            }
+            showToast('Wznowiono naukę od zapisanego miejsca.');
         }
 
         function dismissWelcomeBanner() {
@@ -1259,117 +1354,114 @@
             banner.classList.remove('flex');
         }
 
+        function formatTimeShort(isoString) {
+            if (!isoString) return 'teraz';
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) +
+                       ' (' + date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ')';
+            } catch (e) {
+                return 'zapisano';
+            }
+        }
+
         /**
-         * Backup & Restore Modal Controls
+         * Backup & Restore Modal Functions (Saves/Restores all 3 categories at once)
          */
         function openBackupModal() {
             const modal = document.getElementById('backupModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.getElementById('importCodeInput').value = '';
         }
 
         function closeBackupModal() {
             const modal = document.getElementById('backupModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.getElementById('importCodeInput').value = '';
         }
 
-        function getSerializedBackup() {
-            saveAllState();
-            return JSON.stringify({
+        function buildBackupPayload() {
+            const serializeCat = (cat) => ({
+                cards: cat.cards,
+                globalStep: cat.globalStep,
+                direction: cat.direction,
+                currentCardId: cat.currentCardId,
+                currentCardFrontLang: cat.currentCardFrontLang,
+                isFlipped: cat.isFlipped,
+                isPaused: cat.isPaused,
+                lastSavedAt: cat.lastSavedAt || new Date().toISOString()
+            });
+
+            return {
+                app: 'fiszki-angielski-multicat',
                 version: 2,
                 exportedAt: new Date().toISOString(),
                 activeCategory: appState.activeCategory,
                 categories: {
-                    travel: appState.categories.travel,
-                    shopping: appState.categories.shopping,
-                    combined: appState.categories.combined
+                    travel: serializeCat(appState.categories.travel),
+                    shopping: serializeCat(appState.categories.shopping),
+                    combined: serializeCat(appState.categories.combined)
                 }
-            });
+            };
         }
 
         function downloadBackupFile() {
-            try {
-                const dataStr = getSerializedBackup();
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                const datePart = new Date().toISOString().slice(0, 10);
-                a.href = url;
-                a.download = `fiszki_angielski_postep_${datePart}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast('Pobrano plik z kopią zapasową!');
-            } catch (e) {
-                showToast('Błąd podczas tworzenia pliku kopii.');
-            }
+            const dataStr = JSON.stringify(buildBackupPayload(), null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateSlug = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `fiszki-postep-wszystkie-kategorie-${dateSlug}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Pobrano plik kopii zapasowej (wszystkie 3 kategorie).');
         }
 
         function copyBackupCode() {
-            try {
-                const raw = getSerializedBackup();
-                // Encode UTF-8 string safely to Base64
-                const encoded = btoa(unescape(encodeURIComponent(raw)));
-                const tempInput = document.createElement('textarea');
-                tempInput.value = encoded;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                showToast('Skopiowano kod postępu do schowka!');
-            } catch (e) {
-                showToast('Nie udało się skopiować kodu.');
-            }
+            const jsonStr = JSON.stringify(buildBackupPayload());
+            const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+            const tempInput = document.createElement('textarea');
+            tempInput.value = encoded;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Skopiowano kod postępu do schowka!');
         }
 
         function applyImportedData(parsed) {
-            if (!parsed) {
-                showToast('Nieprawidłowy format danych kopii zapasowej.');
-                return false;
-            }
+            if (!parsed) return false;
 
-            // Support v2 multi-category backup
-            if (parsed.version === 2 && parsed.categories) {
+            if (parsed.categories && typeof parsed.categories === 'object') {
                 appState.activeCategory = CATEGORIES[parsed.activeCategory] ? parsed.activeCategory : 'travel';
                 appState.categories.travel = hydrateCategoryState('travel', parsed.categories.travel);
                 appState.categories.shopping = hydrateCategoryState('shopping', parsed.categories.shopping);
                 appState.categories.combined = hydrateCategoryState('combined', parsed.categories.combined);
-            } 
-            // Support v1 single-category backup (imports into 'travel')
-            else if (Array.isArray(parsed.cards) && parsed.cards.length === 40) {
+            } else if (Array.isArray(parsed.cards) && parsed.cards.length === TRAVEL_SENTENCES.length) {
                 appState.activeCategory = 'travel';
                 appState.categories.travel = hydrateCategoryState('travel', parsed);
             } else {
-                showToast('Nieprawidłowy format danych kopii zapasowej.');
                 return false;
             }
 
-            const state = getActiveCatState();
-            state.isPaused = false;
-            document.getElementById('directionSelect').value = state.direction;
-
             saveAllState();
+            const state = getActiveCatState();
+            document.getElementById('directionSelect').value = state.direction;
+            updateCategoryTabsUI();
             updateDashboardStats();
             renderPhrasesTable();
 
-            document.getElementById('pausedView').classList.add('hidden');
-            document.getElementById('pausedView').classList.remove('flex');
-            document.getElementById('statsView').classList.add('hidden');
-            document.getElementById('statsView').classList.remove('flex');
-            document.getElementById('studyView').classList.remove('hidden');
-            document.getElementById('toggleStatsText').textContent = 'Statystyki i lista';
-
-            if (state.currentCardId) {
-                restoreCardUIState();
+            if (state.isPaused) {
+                pauseStudy();
             } else {
-                selectNextCard();
+                resumeStudy();
             }
-
             closeBackupModal();
-            showToast('Pomyślnie wczytano postęp wszystkich kategorii!');
+            showToast('Pomyślnie wczytano zapisany postęp nauki!');
             return true;
         }
 
@@ -1380,7 +1472,9 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    applyImportedData(parsed);
+                    if (!applyImportedData(parsed)) {
+                        showToast('Nieprawidłowy format pliku kopii zapasowej.');
+                    }
                 } catch (err) {
                     showToast('Błąd odczytu pliku JSON.');
                 }
@@ -1390,22 +1484,31 @@
         }
 
         function importFromCode() {
-            const code = document.getElementById('importCodeInput').value.trim();
-            if (!code) {
+            const raw = document.getElementById('importCodeInput').value.trim();
+            if (!raw) {
                 showToast('Wklej najpierw kod postępu.');
                 return;
             }
             try {
-                const decoded = decodeURIComponent(escape(atob(code)));
+                const decoded = decodeURIComponent(escape(atob(raw)));
                 const parsed = JSON.parse(decoded);
-                applyImportedData(parsed);
+                if (!applyImportedData(parsed)) {
+                    showToast('Kod postępu jest nieprawidłowy.');
+                }
             } catch (e) {
-                showToast('Nieprawidłowy kod postępu.');
+                try {
+                    const parsedDirect = JSON.parse(raw);
+                    if (!applyImportedData(parsedDirect)) {
+                        showToast('Nie udało się odczytać kodu postępu.');
+                    }
+                } catch (e2) {
+                    showToast('Nieprawidłowy kod postępu.');
+                }
             }
         }
 
         /**
-         * Filters the phrases table in the Stats View
+         * Filter controls for the phrase list table
          */
         function setListFilter(filter) {
             appState.listFilter = filter;
@@ -1420,69 +1523,53 @@
         }
 
         /**
-         * Renders sentences and algorithmic weights/statuses for the currently active category
+         * Renders all sentences of the currently selected category into the statistics table
          */
         function renderPhrasesTable() {
             const state = getActiveCatState();
-            const catMeta = CATEGORIES[appState.activeCategory];
-            const total = state.cards.length;
-
-            document.getElementById('statsViewTitle').textContent = 
-                `Analiza postępów: ${catMeta.name} (${total} zdań)`;
-            document.getElementById('filterAllBtn').textContent = `Wszystkie (${total})`;
-
             const tbody = document.getElementById('phrasesTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             const filtered = state.cards.filter(card => {
                 if (appState.listFilter === 'all') return true;
+                if (appState.listFilter === 'hard') return card.status === 'hard' || card.status === 'new';
                 return card.status === appState.listFilter;
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="py-8 text-center text-slate-400 text-sm">
-                            Brak zwrotów w tej kategorii.
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400 text-sm">Brak zwrotów w tej kategorii filtra.</td></tr>`;
                 return;
             }
 
             filtered.forEach(card => {
-                let statusBadge = '';
+                let badgeHtml = '';
                 if (card.status === 'new') {
-                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Nowe</span>';
+                    badgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Nowa</span>`;
                 } else if (card.status === 'hard') {
-                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Nie umiem</span>';
+                    badgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Nie umiem</span>`;
                 } else if (card.status === 'unsure') {
-                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Niepewne</span>';
+                    badgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Niepewna</span>`;
                 } else {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Umiem (${card.masteryLevel}/5)</span>`;
+                    badgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Umiem (${card.masteryLevel}/5)</span>`;
                 }
 
-                let priorityLabel = 'Normalny';
-                if (card.weight >= 9) priorityLabel = '<span class="text-rose-600 font-bold">Bardzo wysoki</span>';
-                else if (card.weight >= 5) priorityLabel = '<span class="text-amber-600 font-semibold">Podwyższony</span>';
-                else if (card.weight <= 1.2) priorityLabel = '<span class="text-emerald-600">Przypominający</span>';
-
                 const originPill = appState.activeCategory === 'combined'
-                    ? `<span class="inline-block mr-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100">${card.origin}</span>`
+                    ? `<span class="inline-block mr-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100">${card.origin}</span>`
                     : '';
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition';
                 tr.innerHTML = `
-                    <td class="py-3 px-3.5 font-semibold text-slate-400 align-top">${card.id}</td>
+                    <td class="py-3 px-3.5 font-bold text-slate-400 align-top">${card.id}</td>
                     <td class="py-3 px-3.5 align-top">
                         <p class="font-semibold text-slate-800">${originPill}${card.pl}</p>
-                        <p class="text-indigo-700 font-medium mt-0.5">${card.en}</p>
+                        <p class="text-slate-500 text-xs mt-0.5">${card.en}</p>
                     </td>
-                    <td class="py-3 px-3.5 align-top whitespace-nowrap">${statusBadge}</td>
+                    <td class="py-3 px-3.5 align-top whitespace-nowrap">${badgeHtml}</td>
                     <td class="py-3 px-3.5 align-top text-right whitespace-nowrap text-xs text-slate-500">
-                        <div>Priorytet: ${priorityLabel}</div>
-                        <div class="mt-0.5">Próby: ${card.attempts} (Błędy: ${card.hardCount})</div>
+                        <div>Waga: <strong class="text-slate-700">${card.weight.toFixed(1)}</strong></div>
+                        <div>Próby: ${card.attempts}</div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1490,94 +1577,128 @@
         }
 
         /**
-         * Two-step progress reset without browser confirm()
+         * Two-step reset confirmation for the ACTIVE category only
          */
         function promptReset() {
             document.getElementById('resetStep1Btn').classList.add('hidden');
-            document.getElementById('resetConfirmBox').classList.remove('hidden');
-            document.getElementById('resetConfirmBox').classList.add('flex');
+            const box = document.getElementById('resetConfirmBox');
+            box.classList.remove('hidden');
+            box.classList.add('flex');
         }
 
         function cancelReset() {
-            document.getElementById('resetConfirmBox').classList.add('hidden');
-            document.getElementById('resetConfirmBox').classList.remove('flex');
-            document.getElementById('resetStep1Btn').classList.remove('hidden');
+            const box = document.getElementById('resetConfirmBox');
+            const btn = document.getElementById('resetStep1Btn');
+            if (box) {
+                box.classList.add('hidden');
+                box.classList.remove('flex');
+            }
+            if (btn) btn.classList.remove('hidden');
         }
 
         function executeReset() {
-            const activeKey = appState.activeCategory;
-            appState.categories[activeKey] = createInitialCategoryState(activeKey);
+            const catKey = appState.activeCategory;
+            appState.categories[catKey] = createInitialCategoryState(catKey);
             saveAllState();
+            cancelReset();
+            updateCategoryTabsUI();
             updateDashboardStats();
             renderPhrasesTable();
-            cancelReset();
             selectNextCard();
-            showToast(`Statystyki kategorii „${CATEGORIES[activeKey].name}” zostały wyzerowane.`);
+            showToast(`Postęp kategorii „${CATEGORIES[catKey].name}” został zresetowany.`);
         }
 
         /**
-         * Displays a brief toast notification
+         * Displays brief feedback toast at bottom of screen
          */
+        let toastTimeout = null;
         function showToast(message) {
             const toast = document.getElementById('toastBanner');
+            if (!toast) return;
             toast.textContent = message;
             toast.classList.remove('opacity-0');
-            setTimeout(() => {
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
-            }, 2600);
+            }, 2500);
         }
 
         /**
-         * Keyboard Shortcuts Support
-         * Space: Flip card
-         * 1: Nie umiem | 2: Nie jestem pewien | 3: Umiem
+         * Keyboard Shortcuts Support:
+         * Space / Enter -> Flip Card
+         * 1 -> Nie umiem | 2 -> Nie jestem pewien | 3 -> Umiem
          */
         document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
             const state = getActiveCatState();
-            const statsView = document.getElementById('statsView');
-            const backupModal = document.getElementById('backupModal');
-            if (!statsView.classList.contains('hidden')) return;
-            if (!backupModal.classList.contains('hidden')) return;
-            if (state.isPaused) return;
-            if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'INPUT')) return;
+            const statsHidden = document.getElementById('statsView').classList.contains('hidden');
+            const pausedHidden = document.getElementById('pausedView').classList.contains('hidden');
+            const backupHidden = document.getElementById('backupModal').classList.contains('hidden');
+            if (!statsHidden || !pausedHidden || !backupHidden) return;
 
             if (e.code === 'Space') {
                 e.preventDefault();
                 flipCard();
             } else if (state.isFlipped) {
-                if (e.key === '1') {
-                    rateCard('hard');
-                } else if (e.key === '2') {
-                    rateCard('unsure');
-                } else if (e.key === '3') {
-                    rateCard('known');
-                }
+                if (e.key === '1') rateCard('hard');
+                if (e.key === '2') rateCard('unsure');
+                if (e.key === '3') rateCard('known');
             }
         });
 
-        // Initialize Application on Load
-        window.addEventListener('DOMContentLoaded', () => {
-            const hasSavedProgress = loadAllState();
-            const state = getActiveCatState();
-            document.getElementById('directionSelect').value = state.direction;
-            updateDashboardStats();
+        /**
+         * Reliable Application Bootstrap (handles both DOMContentLoaded and immediate execution)
+         */
+        function initApp() {
+            try {
+                const hasExistingProgress = loadAllState();
+                const state = getActiveCatState();
+                const dirSelect = document.getElementById('directionSelect');
+                if (dirSelect) dirSelect.value = state.direction;
 
-            if (hasSavedProgress && state.currentCardId) {
-                const banner = document.getElementById('welcomeBackBanner');
-                banner.classList.remove('hidden');
-                banner.classList.add('flex');
-                document.getElementById('welcomeBackSubtext').textContent = 
-                    `Kategoria: ${CATEGORIES[appState.activeCategory].name} • Fiszka #${state.currentCardId} • Ostatni zapis: ${formatTimestamp(state.lastSavedAt)}`;
+                updateCategoryTabsUI();
+                updateDashboardStats();
 
-                if (state.isPaused) {
-                    pauseStudy();
+                if (hasExistingProgress && state.currentCardId) {
+                    const banner = document.getElementById('welcomeBackBanner');
+                    const subtext = document.getElementById('welcomeBackSubtext');
+                    const catName = CATEGORIES[appState.activeCategory].name;
+                    if (banner && subtext) {
+                        subtext.textContent = `Kategoria: ${catName} • Ostatni zapis: ${formatTimeShort(state.lastSavedAt)}`;
+                        banner.classList.remove('hidden');
+                        banner.classList.add('flex');
+                    }
+
+                    if (state.isPaused) {
+                        pauseStudy();
+                    } else {
+                        restoreCardUIState();
+                    }
                 } else {
-                    restoreCardUIState();
+                    selectNextCard();
                 }
-            } else {
+            } catch (fatalErr) {
+                console.error('Błąd inicjalizacji fiszek, uruchamianie trybu awaryjnego:', fatalErr);
+                appState.activeCategory = 'travel';
+                appState.categories.travel = createInitialCategoryState('travel');
+                appState.categories.shopping = createInitialCategoryState('shopping');
+                appState.categories.combined = createInitialCategoryState('combined');
+                updateCategoryTabsUI();
+                updateDashboardStats();
                 selectNextCard();
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
