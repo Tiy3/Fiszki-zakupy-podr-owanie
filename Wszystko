@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiszki Angielski - Inteligentny System Powtórek</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 3D Card Flip Mechanics */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        /* Subtle custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Top Navigation & Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                    EN
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Fiszki Angielski</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Adaptacyjny algorytm powtórek • 3 kategorie</p>
+                </div>
+            </div>
+
+            <!-- Mode & View Controls -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Direction Selector -->
+                <select id="directionSelect" onchange="changeDirection(this.value)" title="Kierunek tłumaczenia"
+                    class="text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/70 text-slate-700 font-medium py-2 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer">
+                    <option value="pl-en">🇵🇱 PL ➔ 🇬🇧 EN</option>
+                    <option value="en-pl">🇬🇧 EN ➔ 🇵🇱 PL</option>
+                    <option value="mixed">🔀 Tryb mieszany</option>
+                </select>
+
+                <!-- Pause Study Button -->
+                <button onclick="pauseStudy()" id="pauseStudyBtn" title="Zapisz stan i zrób przerwę"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold py-2 px-3.5 rounded-xl border border-amber-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Zrób przerwę</span>
+                </button>
+
+                <!-- Backup / Restore Button -->
+                <button onclick="openBackupModal()" title="Kopia zapasowa postępu (Zapisz / Wczytaj)"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold py-2 px-3 rounded-xl border border-slate-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span class="hidden md:inline">Kopia zapasowa</span>
+                </button>
+
+                <!-- Toggle Stats / List Modal Button -->
+                <button onclick="toggleStatsView()" id="toggleStatsBtn"
+                    class="flex items-center gap-1.5 text-xs sm:text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 px-3.5 rounded-xl border border-indigo-200 transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span id="toggleStatsText">Statystyki i lista</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Switcher Bar (Independent states & progress per category) -->
+        <div class="bg-slate-50/90 border-t border-slate-200/80">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="categoryTabsContainer">
+                    <!-- Category 1: Podróże i transport -->
+                    <button type="button" onclick="switchCategory('travel')" id="catTab-travel"
+                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-900 truncate">✈️ Podróże i transport</span>
+                            <span id="catBadge-travel" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0">0%</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <span>40 fiszek</span>
+                            <span id="catKnown-travel">Opanowane: 0/40</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div id="catBar-travel" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </button>
+
+                    <!-- Category 2: Zakupy i usługi -->
+                    <button type="button" onclick="switchCategory('shopping')" id="catTab-shopping"
+                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate">🛍️ Zakupy i usługi</span>
+                            <span id="catBadge-shopping" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <span>40 fiszek</span>
+                            <span id="catKnown-shopping">Opanowane: 0/40</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div id="catBar-shopping" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </button>
+
+                    <!-- Category 3: Wszystkie (Połączone) -->
+                    <button type="button" onclick="switchCategory('combined')" id="catTab-combined"
+                        class="category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate">📚 Wszystkie (Połączone)</span>
+                            <span id="catBadge-combined" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">0%</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <span>80 fiszek</span>
+                            <span id="catKnown-combined">Opanowane: 0/80</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div id="catBar-combined" class="bg-indigo-600 h-1 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Mastery Progress Bar for Active Category -->
+        <div class="w-full bg-slate-100 h-1.5">
+            <div id="globalProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between">
+
+        <!-- Welcome Back Banner (Shown when resuming previous progress) -->
+        <div id="welcomeBackBanner" class="hidden mb-4 bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-3 rounded-2xl items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-2.5 text-xs sm:text-sm">
+                <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">↻</span>
+                <div>
+                    <p class="font-semibold">Witaj z powrotem! Wznowiono od miejsca, w którym skończyłeś.</p>
+                    <p id="welcomeBackSubtext" class="text-xs text-indigo-700/80">Ostatni zapis: przed chwilą</p>
+                </div>
+            </div>
+            <button onclick="dismissWelcomeBanner()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition cursor-pointer shrink-0">
+                Zamknij
+            </button>
+        </div>
+
+        <!-- STUDY VIEW -->
+        <div id="studyView" class="flex-1 flex flex-col justify-between gap-6">
+            
+            <!-- Live Stats Pill Row -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Opanowanie</p>
+                        <p id="statMasteryPercent" class="text-lg sm:text-xl font-bold text-indigo-600">0%</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">★</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Umiem</p>
+                        <p id="statKnownCount" class="text-lg sm:text-xl font-bold text-emerald-600">0 / 40</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">✓</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Niepewne / Trudne</p>
+                        <p id="statHardCount" class="text-lg sm:text-xl font-bold text-amber-600">0</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">!</div>
+                </div>
+
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Powtórki w sesji</p>
+                        <p id="statSessionCount" class="text-lg sm:text-xl font-bold text-slate-700">0</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">↻</div>
+                </div>
+            </div>
+
+            <!-- Flashcard Container -->
+            <div class="flex-1 flex flex-col items-center justify-center my-2">
+                <div class="w-full max-w-2xl perspective-1000">
+                    <div id="flashcardInner" onclick="flipCard()" 
+                        class="relative w-full min-h-[300px] sm:min-h-[340px] transform-style-3d cursor-pointer select-none">
+                        
+                        <!-- FRONT FACE -->
+                        <div class="absolute inset-0 backface-hidden bg-white rounded-3xl border border-slate-200 shadow-lg hover:shadow-xl transition-shadow p-6 sm:p-10 flex flex-col justify-between">
+                            <!-- Card Top Metadata -->
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span id="cardNumberBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">#1</span>
+                                    <span id="cardOriginBadge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-100">Podróże</span>
+                                    <span id="cardReasonBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700">Nowy zwrot</span>
+                                </div>
+                                <span id="frontLangLabel" class="text-xs font-bold uppercase tracking-wider text-slate-400">Polski</span>
+                            </div>
+
+                            <!-- Card Main Sentence -->
+                            <div class="my-auto py-4 text-center">
+                                <p id="frontText" class="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 leading-snug">
+                                    Ładowanie...
+                                </p>
+                            </div>
+
+                            <!-- Card Bottom Hint & Audio (if front is EN) -->
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                                <button id="frontSpeakBtn" type="button" onclick="event.stopPropagation(); speakEnglish();" 
+                                    class="hidden items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                    Odsłuchaj
+                                </button>
+                                <span class="text-xs text-slate-400 ml-auto flex items-center gap-1">
+                                    Kliknij fiszkę lub naciśnij <kbd class="px-1.5 py-0.5 text-[10px] font-semibold bg-slate-100 border border-slate-300 rounded">Spację</kbd>, aby odwrócić
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- BACK FACE -->
+                        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-900 text-white rounded-3xl border border-indigo-800/50 shadow-xl p-6 sm:p-10 flex flex-col justify-between">
+                            <!-- Top Row -->
+                            <div class="flex items-center justify-between gap-2">
+                                <span id="backLangLabel" class="text-xs font-bold uppercase tracking-wider text-indigo-300">Angielski</span>
+                                <button type="button" onclick="event.stopPropagation(); speakEnglish();" 
+                                    class="flex items-center gap-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl transition cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                    Wymowa EN
+                                </button>
+                            </div>
+
+                            <!-- Translation Text -->
+                            <div class="my-auto py-4 text-center space-y-3">
+                                <p id="backText" class="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-snug">
+                                    Loading...
+                                </p>
+                                <p id="backReferenceText" class="text-xs sm:text-sm text-indigo-200/80 font-normal">
+                                    ...
+                                </p>
+                            </div>
+
+                            <!-- Card Mastery History Footer -->
+                            <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs text-slate-400">
+                                <span id="cardHistoryInfo">Próby: 0 | Poziom utrwalenia: 0/5</span>
+                                <span>Oceń swoją odpowiedź poniżej ↓</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls Area -->
+            <div class="w-full max-w-2xl mx-auto">
+                <!-- Prompt before flip -->
+                <div id="revealPromptArea" class="flex justify-center">
+                    <button onclick="flipCard()" 
+                        class="w-full sm:w-auto min-w-[240px] bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold py-3.5 px-8 rounded-2xl shadow-md shadow-indigo-200 transition cursor-pointer text-base">
+                        Pokaż odpowiedź
+                    </button>
+                </div>
+
+                <!-- 3 Rating Buttons after flip -->
+                <div id="ratingButtonsArea" class="hidden grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Option 1: Nie umiem -->
+                    <button onclick="rateCard('hard')" 
+                        class="group flex flex-col items-center justify-center bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border-2 border-rose-200 hover:border-rose-600 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
+                        <div class="flex items-center gap-2 font-bold text-base">
+                            <span>Nie umiem</span>
+                            <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-rose-100 group-hover:bg-rose-500 text-rose-800 group-hover:text-white border border-rose-300 group-hover:border-rose-400">1</kbd>
+                        </div>
+                        <span id="hintHard" class="text-[11px] opacity-80 mt-0.5 font-medium">Wróci za ~2 fiszki</span>
+                    </button>
+
+                    <!-- Option 2: Nie jestem pewien -->
+                    <button onclick="rateCard('unsure')" 
+                        class="group flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-500 text-amber-800 hover:text-white border-2 border-amber-200 hover:border-amber-500 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
+                        <div class="flex items-center gap-2 font-bold text-base">
+                            <span>Nie jestem pewien</span>
+                            <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-100 group-hover:bg-amber-400 text-amber-900 group-hover:text-white border border-amber-300 group-hover:border-amber-300">2</kbd>
+                        </div>
+                        <span id="hintUnsure" class="text-[11px] opacity-80 mt-0.5 font-medium">Wróci za ~5 fiszek</span>
+                    </button>
+
+                    <!-- Option 3: Umiem -->
+                    <button onclick="rateCard('known')" 
+                        class="group flex flex-col items-center justify-center bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border-2 border-emerald-200 hover:border-emerald-600 p-3.5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm active:scale-[0.98]">
+                        <div class="flex items-center gap-2 font-bold text-base">
+                            <span>Umiem</span>
+                            <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 group-hover:bg-emerald-500 text-emerald-800 group-hover:text-white border border-emerald-300 group-hover:border-emerald-400">3</kbd>
+                        </div>
+                        <span id="hintKnown" class="text-[11px] opacity-80 mt-0.5 font-medium">Przypomnienie za ~10 fiszek</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAUSED SESSION VIEW (Hidden by default) -->
+        <div id="pausedView" class="hidden flex-1 flex-col items-center justify-center py-6">
+            <div class="w-full max-w-xl bg-white rounded-3xl border border-slate-200 shadow-lg p-6 sm:p-10 text-center space-y-6">
+                <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+                        <span>Kategoria:</span>
+                        <span id="pausedCategoryName">Podróże i transport</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900">Nauka wstrzymana — postęp zapisany</h2>
+                    <p class="text-sm text-slate-500">
+                        Możesz bezpiecznie zamknąć tę kartę, przełączyć kategorię lub wrócić do nauki w dowolnym momencie. Twoja aktualna fiszka (<span id="pausedCardInfo" class="font-semibold text-slate-700">#1</span>) oraz wszystkie priorytety algorytmu w tej kategorii zostały zapamiętane.
+                    </p>
+                </div>
+
+                <!-- Session Summary Grid -->
+                <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">W tej sesji</p>
+                        <p id="pausedSessionReviews" class="text-xl font-bold text-slate-800 mt-0.5">0</p>
+                    </div>
+                    <div class="border-x border-slate-200">
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Opanowanie</p>
+                        <p id="pausedMasteryPercent" class="text-xl font-bold text-indigo-600 mt-0.5">0%</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Ostatni zapis</p>
+                        <p id="pausedTimestamp" class="text-sm font-bold text-emerald-600 mt-1.5">--:--</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    <button onclick="resumeStudy()" 
+                        class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold py-3.5 px-6 rounded-2xl shadow-md shadow-indigo-200 transition cursor-pointer flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Wznów naukę</span>
+                    </button>
+
+                    <button onclick="openBackupModal()" 
+                        class="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3.5 px-5 rounded-2xl border border-slate-200 transition cursor-pointer text-sm">
+                        Zapisz / Wczytaj postęp
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS & FULL PHRASE LIST VIEW (Hidden by default) -->
+        <div id="statsView" class="hidden flex-col gap-5">
+            <div class="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 id="statsViewTitle" class="text-lg sm:text-xl font-bold text-slate-900">Analiza postępów: Podróże i transport (40 zdań)</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                            Każda kategoria ma osobny algorytm i oddzielne statystyki. Poniżej widzisz wyniki wyłącznie dla aktualnie wybranej kategorii.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleStatsView()" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold py-2 px-4 rounded-xl transition cursor-pointer">
+                            Wróć do nauki
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter & Reset Toolbar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 my-4">
+                    <div class="flex flex-wrap items-center gap-1.5" id="filterButtons">
+                        <button onclick="setListFilter('all')" data-filter="all" id="filterAllBtn" class="filter-btn bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Wszystkie (40)</button>
+                        <button onclick="setListFilter('hard')" data-filter="hard" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Trudne / Do nauki</button>
+                        <button onclick="setListFilter('unsure')" data-filter="unsure" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Niepewne</button>
+                        <button onclick="setListFilter('known')" data-filter="known" class="filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer">Opanowane</button>
+                    </div>
+
+                    <!-- Safe Two-Step Reset Button for Active Category (no confirm()) -->
+                    <div id="resetContainer">
+                        <button id="resetStep1Btn" onclick="promptReset()" 
+                            class="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition cursor-pointer">
+                            Resetuj tę kategorię
+                        </button>
+                        <div id="resetConfirmBox" class="hidden items-center gap-1.5">
+                            <span class="text-xs font-semibold text-rose-700">Wyzerować tę kategorię?</span>
+                            <button onclick="executeReset()" class="text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-lg hover:bg-rose-700 cursor-pointer">Tak</button>
+                            <button onclick="cancelReset()" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg hover:bg-slate-300 cursor-pointer">Anuluj</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table / List of Phrases -->
+                <div class="overflow-x-auto max-h-[58vh] overflow-y-auto rounded-2xl border border-slate-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
+                            <tr>
+                                <th class="py-3 px-3.5 font-semibold w-10">#</th>
+                                <th class="py-3 px-3.5 font-semibold">Zdanie (PL / EN)</th>
+                                <th class="py-3 px-3.5 font-semibold whitespace-nowrap">Status</th>
+                                <th class="py-3 px-3.5 font-semibold whitespace-nowrap text-right">Priorytet / Próby</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phrasesTableBody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Backup / Restore Modal -->
+    <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Zapisz lub wczytaj postęp nauki</h3>
+                    <p class="text-xs text-slate-500">Kopia obejmuje oddzielne postępy dla wszystkich 3 kategorii jednocześnie.</p>
+                </div>
+                <button onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer">✕</button>
+            </div>
+
+            <!-- Export Section -->
+            <div class="space-y-2.5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">1. Eksportuj aktualny postęp</label>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="downloadBackupFile()" 
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Pobierz plik (.json)
+                    </button>
+                    <button onclick="copyBackupCode()" 
+                        class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold py-2.5 px-4 rounded-xl border border-slate-200 transition cursor-pointer flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        Kopiuj kod postępu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Import Section -->
+            <div class="space-y-2.5 pt-2 border-t border-slate-100">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">2. Wczytaj zapisany postęp</label>
+                
+                <!-- Upload JSON File -->
+                <div class="flex items-center gap-2">
+                    <label class="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-2.5 px-4 rounded-xl border border-dashed border-slate-300 cursor-pointer transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span>Wybierz plik kopii zapasowej (.json)</span>
+                        <input type="file" id="backupFileInput" accept=".json" onchange="handleBackupFileUpload(event)" class="hidden" />
+                    </label>
+                </div>
+
+                <!-- Paste Code -->
+                <div class="flex gap-2">
+                    <input type="text" id="importCodeInput" placeholder="Lub wklej tutaj skopiowany kod postępu..." 
+                        class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button onclick="importFromCode()" 
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer shrink-0">
+                        Wczytaj
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toastBanner" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+        Postęp został zapisany
+    </div>
+
+    <script>
+        /**
+         * CATEGORY 1: PODRÓŻE I TRANSPORT (40 SENTENCES - COMPLETELY UNCHANGED)
+         */
+        const TRAVEL_SENTENCES = [
+            { id: 1, pl: "Czy ten autobus piętrowy jedzie bezpośrednio na lotnisko?", en: "Does this double-decker bus go direct to the airport?" },
+            { id: 2, pl: "Musimy wydrukować kartę pokładową przed pójściem do kontroli paszportowej.", en: "We need to print out a boarding pass before going to passport control." },
+            { id: 3, pl: "Nasz lot do Londynu został odwołany z powodu złej pogody.", en: "Our flight to London was cancelled due to bad weather." },
+            { id: 4, pl: "Wolę latać klasą ekonomiczną, ponieważ bilety są o wiele tańsze.", en: "I prefer flying economy class because the tickets are much cheaper." },
+            { id: 5, pl: "Gdzie jest najbliższy punkt odbioru bagażu na tym terminalu?", en: "Where is the nearest baggage reclaim area at this terminal?" },
+            { id: 6, pl: "Pociąg spóźnił się o ponad trzydzieści minut.", en: "The train was delayed by over thirty minutes." },
+            { id: 7, pl: "Czy możesz podwieźć mnie rano na stację kolejową?", en: "Can you give me a lift to the railway station in the morning?" },
+            { id: 8, pl: "Złapmy taksówkę, żeby nie spóźnić się na spotkanie.", en: "Let's catch a taxi so that we aren't late for the meeting." },
+            { id: 9, pl: "Wszystkie miejsca w tym luksusowym hotelu są już w pełni zarezerwowane.", en: "All rooms in this luxury hotel are already fully booked." },
+            { id: 10, pl: "Zarezerwowałem pokój dwuosobowy z łazienką z dużym wyprzedzeniem.", en: "I booked a double room with an en suite bathroom well in advance." },
+            { id: 11, pl: "Czy ten pensjonat oferuje śniadania wliczone w cenę?", en: "Does this guest house offer breakfast included in the price?" },
+            { id: 12, pl: "Chciałbym zameldować się w hotelu i zapytać o wolne pokoje.", en: "I would like to check in at the hotel and ask about vacancies." },
+            { id: 13, pl: "Ta oferta last-minute zawiera darmowe korzystanie z udogodnień hotelowych.", en: "This last-minute holiday includes free use of the hotel facilities." },
+            { id: 14, pl: "Zamiast hotelu, zdecydowaliśmy się wynająć domek letniskowy na wsi.", en: "Instead of a hotel, we decided to rent a cabin in the countryside." },
+            { id: 15, pl: "Czy ten apartament jest przyjazny dla psów?", en: "Is this apartment dog-friendly?" },
+            { id: 16, pl: "Wolę wycieczki objazdowe z przewodnikiem niż samotne podróżowanie.", en: "I prefer a guided tour to solo travel." },
+            { id: 17, pl: "Moja ostatnia podróż służbowa była niezwykle męcząca.", en: "My last business trip was extremely tiring." },
+            { id: 18, pl: "Widok z tego stromego urwiska zapierał dech w piersiach.", en: "The view from this sheer cliff was breathtaking." },
+            { id: 19, pl: "Chętnie pojadę na krótką wycieczkę za miasto w ten weekend.", en: "I would gladly go on a short excursion outside the city this weekend." },
+            { id: 20, pl: "Powinniśmy kupić pamiątki w tym lokalnym sklepie.", en: "We should buy some souvenirs at this local shop." },
+            { id: 21, pl: "Kupiliśmy wycieczkę zorganizowaną all-inclusive do Grecji.", en: "We bought an all-inclusive package holiday to Greece." },
+            { id: 22, pl: "Spacerowaliśmy po starożytnych ruinach i podziwialiśmy architekturę.", en: "We walked through the ancient ruins and admired the architecture." },
+            { id: 23, pl: "Gdzie mogę sprawdzić godziny otwarcia tej galerii sztuki?", en: "Where can I check the opening hours of this art gallery?" },
+            { id: 24, pl: "Nasz samochód zepsuł się na autostradzie i musieliśmy wezwać pomoc drogową.", en: "Our car broke down on the motorway and we had to call rescue services." },
+            { id: 25, pl: "Na skrzyżowaniu doszło do poważnego wypadku, wezwij pogotowie!", en: "There was a serious accident at the junction, call an ambulance!" },
+            { id: 26, pl: "Złapałem gumę i nie wiem, jak zmienić koło.", en: "I have a puncture and I don't know how to change the wheel." },
+            { id: 27, pl: "Kierowca dostał mandat za przekroczenie prędkości w terenie zabudowanym.", en: "The driver got a speeding ticket for exceeding the speed limit in a built-up area." },
+            { id: 28, pl: "Utknęliśmy w ogromnym korku ulicznym z powodu robót drogowych.", en: "We are stuck in a huge traffic jam because of roadworks." },
+            { id: 29, pl: "Zawsze zapinam pasy bezpieczeństwa zaraz po wejściu do samochodu.", en: "I always wear a seat belt as soon as I get into the car." },
+            { id: 30, pl: "Zwolnij przed przejściem dla pieszych i uważaj na znaki drogowe.", en: "Slow down before the pedestrian crossing and pay attention to road signs." },
+            { id: 31, pl: "Na tym rondzie musisz ustąpić pierwszeństwa przejazdu.", en: "At this roundabout, you have to give way." },
+            { id: 32, pl: "Fotoradar zrobił mi zdjęcie, kiedy spieszyłem się do pracy.", en: "A speed camera took a photo of me when I was hurrying to work." },
+            { id: 33, pl: "Podczas rejsu statkiem cierpiałem na chorobę morską.", en: "During the boat trip, I was seasick." },
+            { id: 34, pl: "Przed wyjazdem za granicę należy wykupić ubezpieczenie turystyczne.", en: "Before going abroad, you should take out travel insurance." },
+            { id: 35, pl: "W razie nagłego wypadku powinieneś skontaktować się z ambasadą.", en: "In case of an emergency, you should contact an embassy." },
+            { id: 36, pl: "Zawsze podróżuję z małą ilością bagażu, aby uniknąć dodatkowych opłat.", en: "I always travel light to avoid extra charges." },
+            { id: 37, pl: "Należy przestrzegać przepisów i unikać niepotrzebnego ryzyka.", en: "You should follow regulations and avoid unnecessary risks." },
+            { id: 38, pl: "Ta wycieczka do rezerwatu przyrody jest zdecydowanie warta swojej ceny.", en: "This trip to the nature reserve is definitely well worth its price." },
+            { id: 39, pl: "Jak najlepiej wykorzystać wolny dzień podczas wakacji?", en: "How can we make the most of a day out during holidays?" },
+            { id: 40, pl: "Przeprowadziliśmy dokładne badanie rynku przed otwarciem nowego biznesu.", en: "We did in-depth research into the market before opening the new business." }
+        ];
+
+        /**
+         * CATEGORY 2: ZAKUPY I USŁUGI (40 SENTENCES - COMPLETELY UNCHANGED)
+         */
+        const SHOPPING_SENTENCES = [
+            { id: 1, pl: "Często kupuję świeże pieczywo w lokalnej piekarni.", en: "I often buy fresh bread at the local baker's." },
+            { id: 2, pl: "Wolę robić zakupy w sieciówkach niż w dużych domach towarowych.", en: "I prefer shopping at chain stores rather than large department stores." },
+            { id: 3, pl: "Czy ta apteka jest otwarta w niedziele?", en: "Is this chemist's open on Sundays?" },
+            { id: 4, pl: "Moja siostra kupiła te piękne buty w małym butiku.", en: "My sister bought these beautiful shoes in a small boutique." },
+            { id: 5, pl: "Gdzie znajdę artykuły piśmiennicze i chemię gospodarczą?", en: "Where can I find stationery and household chemicals?" },
+            { id: 6, pl: "Nie stać mnie na ten drogi zegarek z wyższej półki.", en: "I can't afford this expensive, upmarket watch." },
+            { id: 7, pl: "Ten laptop ma świetny stosunek jakości do ceny.", en: "This laptop offers great value for money." },
+            { id: 8, pl: "Kupiłem ten rower za bezcen na wyprzedaży garażowej.", en: "I bought this bike for a song at a car boot sale." },
+            { id: 9, pl: "Zawsze sprawdzam strony z porównywarkami cen przed zakupem.", en: "I always check comparison sites before making a purchase." },
+            { id: 10, pl: "Czy mogę zapłacić w ratach za ten sprzęt elektroniczny?", en: "Can I pay in installments for this electronics?" },
+            { id: 11, pl: "Wolę płacić zbliżeniowo telefonem zamiast gotówką.", en: "I prefer contactless payment by phone instead of cash." },
+            { id: 12, pl: "Kasjer nie wydał mi paragonu za te zakupy.", en: "The cashier didn't give me a receipt for these groceries." },
+            { id: 13, pl: "Chciałbym zaoszczędzić trochę pieniędzy na czarną godzinę.", en: "I would like to save money for a rainy day." },
+            { id: 14, pl: "Kupowanie hurtowe jest zazwyczaj o wiele tańsze.", en: "Buying in bulk is usually much cheaper." },
+            { id: 15, pl: "Często kupuję rzeczy pod wpływem impulsu, gdy widzę obniżki.", en: "I often buy on impulse when I see reductions." },
+            { id: 16, pl: "Ta kampania marketingowa w mediach społecznościowych odniosła ogromny sukces.", en: "This social media advertising campaign was a huge success." },
+            { id: 17, pl: "Lokowanie produktu w tym filmie było bardzo widoczne.", en: "The product placement in this movie was very noticeable." },
+            { id: 18, pl: "Ta reklama radiowa jest bardzo irytująca.", en: "This radio commercial is very annoying." },
+            { id: 19, pl: "Ulotki i plakaty są tradycyjnymi formami reklamy.", en: "Flyers and posters are traditional forms of advertising." },
+            { id: 20, pl: "Muszę iść do fryzjera i na pocztę w ten piątek.", en: "I need to go to the hairdresser's and the post office this Friday." },
+            { id: 21, pl: "Agencja nieruchomości pomogła nam znaleźć nowe mieszkanie.", en: "The real estate agency helped us find a new apartment." },
+            { id: 22, pl: "Szukam profesjonalnego doradcy finansowego.", en: "I am looking for a professional financial advisor." },
+            { id: 23, pl: "Czy znasz dobrego optyka w okolicy?", en: "Do you know a good optician around here?" },
+            { id: 24, pl: "Moje dochody netto wzrosły w tym roku.", en: "My disposable income has increased this year." },
+            { id: 25, pl: "Jaki jest dzisiejszy kurs wymiany walut?", en: "What is the exchange rate today?" },
+            { id: 26, pl: "Muszę otworzyć konto internetowe w tym banku.", en: "I need to open an online banking account." },
+            { id: 27, pl: "Boję się, że wkrótce wejdę na debet na moim koncie.", en: "I am afraid I will go in the red on my account soon." },
+            { id: 28, pl: "Jak mogę przelać pieniądze na twoje konto?", en: "How can I transfer money to your account?" },
+            { id: 29, pl: "Inwestowanie w akcje i obligacje niesie za sobą ryzyko.", en: "Investing in stocks and bonds carries risks." },
+            { id: 30, pl: "Zapomniałem złożyć zeznanie podatkowe na czas.", en: "I forgot to submit a tax return on time." },
+            { id: 31, pl: "Chciałbym zwrócić ten uszkodzony towar i odzyskać pieniądze.", en: "I would like to return this damaged item and get my money back." },
+            { id: 32, pl: "Ten sweter skurczył się w praniu, więc chcę go wymienić.", en: "This sweater shrunk in the wash, so I want to exchange it." },
+            { id: 33, pl: "Ta pralka nie działa i jest porysowana.", en: "This washing machine does not work and is scratched." },
+            { id: 34, pl: "Chcę porozmawiać z kierownikiem i złożyć oficjalną reklamację.", en: "I want to speak to the manager and make a complaint." },
+            { id: 35, pl: "Konsumenci mają prawo do okresu odstąpienia od umowy.", en: "Consumers have the right to a cooling-off period." },
+            { id: 36, pl: "Ten produkt ma dwuletnią gwarancję.", en: "This product comes with a two-year guarantee." },
+            { id: 37, pl: "Powinieneś uważać na nieuczciwe zapisy w kontraktach.", en: "You should be wary of unfair clauses in a contract." },
+            { id: 38, pl: "Nie przegap okazji, aby kupić te bilety w dobrej cenie.", en: "Don't miss out on an opportunity to buy these tickets at a good price." },
+            { id: 39, pl: "Ta restauracja zaspokaja potrzeby nawet najbardziej wymagających klientów.", en: "This restaurant caters for the needs of even the most demanding clients." },
+            { id: 40, pl: "Przepraszamy za wszelkie niedogodności spowodowane opóźnieniem", en: "We apologise for any inconvenience caused by the delay" }
+        ];
+
+        /**
+         * CATEGORY DEFINITIONS
+         */
+        const CATEGORIES = {
+            travel: {
+                key: 'travel',
+                name: 'Podróże i transport',
+                shortName: 'Podróże',
+                sentences: TRAVEL_SENTENCES.map(s => ({ ...s, origin: 'Podróże' }))
+            },
+            shopping: {
+                key: 'shopping',
+                name: 'Zakupy i usługi',
+                shortName: 'Zakupy',
+                sentences: SHOPPING_SENTENCES.map(s => ({ ...s, origin: 'Zakupy' }))
+            },
+            combined: {
+                key: 'combined',
+                name: 'Wszystkie (Połączone)',
+                shortName: 'Wszystkie',
+                sentences: [
+                    ...TRAVEL_SENTENCES.map((s, idx) => ({ id: idx + 1, pl: s.pl, en: s.en, origin: 'Podróże' })),
+                    ...SHOPPING_SENTENCES.map((s, idx) => ({ id: idx + 41, pl: s.pl, en: s.en, origin: 'Zakupy' }))
+                ]
+            }
+        };
+
+        const LEGACY_STORAGE_KEY = 'fiszki_travel_40_v1';
+        const MULTI_STORAGE_KEY = 'fiszki_multicat_v2';
+
+        /**
+         * Global Multi-Category Application State
+         * Each category holds its own completely isolated learning state, weights, queue, pause flag & active card.
+         */
+        let appState = {
+            activeCategory: 'travel',
+            listFilter: 'all',
+            categories: {
+                travel: null,
+                shopping: null,
+                combined: null
+            }
+        };
+
+        /**
+         * Helper to get the currently active category's isolated state object
+         */
+        function getActiveCatState() {
+            return appState.categories[appState.activeCategory];
+        }
+
+        /**
+         * Creates default card metadata for a given category key
+         */
+        function createInitialCardsForCategory(catKey) {
+            return CATEGORIES[catKey].sentences.map(item => ({
+                id: item.id,
+                pl: item.pl,
+                en: item.en,
+                origin: item.origin,
+                status: 'new',       // 'new' | 'hard' | 'unsure' | 'known'
+                masteryLevel: 0,     // 0 to 5
+                weight: 4.0,         // Selection priority weight
+                dueStep: 0,          // Earliest globalStep for reappearance
+                attempts: 0,
+                hardCount: 0,
+                unsureCount: 0,
+                knownCount: 0
+            }));
+        }
+
+        /**
+         * Creates a fresh isolated state object for a category
+         */
+        function createInitialCategoryState(catKey) {
+            return {
+                cards: createInitialCardsForCategory(catKey),
+                globalStep: 0,
+                sessionReviews: 0,
+                direction: 'pl-en',
+                currentCardId: null,
+                currentCardFrontLang: 'pl',
+                isFlipped: false,
+                isPaused: false,
+                lastSavedAt: null
+            };
+        }
+
+        /**
+         * Validates and normalizes a loaded category state object
+         */
+        function hydrateCategoryState(catKey, rawCatState) {
+            const expectedLen = CATEGORIES[catKey].sentences.length;
+            if (rawCatState && Array.isArray(rawCatState.cards) && rawCatState.cards.length === expectedLen) {
+                // Ensure origin tags remain intact
+                const defaultSentences = CATEGORIES[catKey].sentences;
+                const mergedCards = rawCatState.cards.map((c, i) => ({
+                    ...c,
+                    pl: defaultSentences[i].pl,
+                    en: defaultSentences[i].en,
+                    origin: defaultSentences[i].origin
+                }));
+                return {
+                    cards: mergedCards,
+                    globalStep: rawCatState.globalStep || 0,
+                    sessionReviews: 0, // Reset live session counter on page reload
+                    direction: rawCatState.direction || 'pl-en',
+                    currentCardId: rawCatState.currentCardId || null,
+                    currentCardFrontLang: rawCatState.currentCardFrontLang || 'pl',
+                    isFlipped: Boolean(rawCatState.isFlipped),
+                    isPaused: Boolean(rawCatState.isPaused),
+                    lastSavedAt: rawCatState.lastSavedAt || null
+                };
+            }
+            return createInitialCategoryState(catKey);
+        }
+
+        /**
+         * Load multi-category progress from localStorage (with seamless migration from v1 single-category storage)
+         */
+        function loadAllState() {
+            appState.categories.travel = createInitialCategoryState('travel');
+            appState.categories.shopping = createInitialCategoryState('shopping');
+            appState.categories.combined = createInitialCategoryState('combined');
+
+            try {
+                const savedMulti = localStorage.getItem(MULTI_STORAGE_KEY);
+                if (savedMulti) {
+                    const parsed = JSON.parse(savedMulti);
+                    if (parsed && parsed.categories) {
+                        appState.activeCategory = CATEGORIES[parsed.activeCategory] ? parsed.activeCategory : 'travel';
+                        appState.categories.travel = hydrateCategoryState('travel', parsed.categories.travel);
+                        appState.categories.shopping = hydrateCategoryState('shopping', parsed.categories.shopping);
+                        appState.categories.combined = hydrateCategoryState('combined', parsed.categories.combined);
+                        const active = getActiveCatState();
+                        return active.globalStep > 0 || active.currentCardId !== null;
+                    }
+                }
+
+                // Fallback migration from v1 single-category storage ("travel")
+                const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
+                if (legacySaved) {
+                    const parsedLegacy = JSON.parse(legacySaved);
+                    appState.categories.travel = hydrateCategoryState('travel', parsedLegacy);
+                    saveAllState();
+                    const active = getActiveCatState();
+                    return active.globalStep > 0 || active.currentCardId !== null;
+                }
+            } catch (e) {
+                console.warn('Nie udało się odczytać zapisanego postępu:', e);
+            }
+            return false;
+        }
+
+        /**
+         * Persist all 3 independent category states to localStorage
+         */
+        function saveAllState() {
+            try {
+                const active = getActiveCatState();
+                active.lastSavedAt = new Date().toISOString();
+
+                const payload = {
+                    version: 2,
+                    activeCategory: appState.activeCategory,
+                    categories: {
+                        travel: { ...appState.categories.travel, sessionReviews: undefined },
+                        shopping: { ...appState.categories.shopping, sessionReviews: undefined },
+                        combined: { ...appState.categories.combined, sessionReviews: undefined }
+                    }
+                };
+                localStorage.setItem(MULTI_STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {
+                console.warn('Nie udało się zapisać postępu:', e);
+            }
+        }
+
+        /**
+         * Switch between the 3 independent categories
+         */
+        function switchCategory(newCatKey) {
+            if (!CATEGORIES[newCatKey] || appState.activeCategory === newCatKey) return;
+
+            appState.activeCategory = newCatKey;
+            appState.listFilter = 'all';
+            cancelReset();
+            saveAllState();
+
+            const state = getActiveCatState();
+            document.getElementById('directionSelect').value = state.direction;
+
+            updateCategoryTabsUI();
+            updateDashboardStats();
+
+            const statsView = document.getElementById('statsView');
+            const isStatsOpen = !statsView.classList.contains('hidden');
+
+            if (isStatsOpen) {
+                setListFilter('all');
+                renderPhrasesTable();
+                if (!state.currentCardId) {
+                    selectNextCard();
+                }
+            } else {
+                if (state.isPaused) {
+                    if (!state.currentCardId) {
+                        selectNextCard();
+                    }
+                    pauseStudy();
+                } else {
+                    document.getElementById('pausedView').classList.add('hidden');
+                    document.getElementById('pausedView').classList.remove('flex');
+                    document.getElementById('studyView').classList.remove('hidden');
+
+                    if (state.currentCardId) {
+                        restoreCardUIState();
+                    } else {
+                        selectNextCard();
+                    }
+                }
+            }
+
+            showToast(`Przełączono na kategorię: ${CATEGORIES[newCatKey].name}`);
+        }
+
+        /**
+         * Updates the visual styling & progress indicators on all 3 category tabs
+         */
+        function updateCategoryTabsUI() {
+            ['travel', 'shopping', 'combined'].forEach(catKey => {
+                const catState = appState.categories[catKey];
+                const total = catState.cards.length;
+                const knownCount = catState.cards.filter(c => c.status === 'known').length;
+                const totalMasteryPoints = catState.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
+                const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
+
+                const tabBtn = document.getElementById(`catTab-${catKey}`);
+                const badgeEl = document.getElementById(`catBadge-${catKey}`);
+                const knownEl = document.getElementById(`catKnown-${catKey}`);
+                const barEl = document.getElementById(`catBar-${catKey}`);
+
+                badgeEl.textContent = `${masteryPercent}%`;
+                knownEl.textContent = `Opanowane: ${knownCount}/${total}`;
+                barEl.style.width = `${masteryPercent}%`;
+
+                if (appState.activeCategory === catKey) {
+                    tabBtn.className = 'category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs';
+                    badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 shrink-0';
+                } else {
+                    tabBtn.className = 'category-tab text-left p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white/70 hover:bg-white border-slate-200';
+                    badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0';
+                }
+            });
+        }
+
+        /**
+         * ADAPTIVE SPACED REPETITION & PRIORITY ALGORITHM (Runs independently per category)
+         */
+        function selectNextCard() {
+            const state = getActiveCatState();
+            const step = state.globalStep;
+            
+            let pool = state.cards.filter(c => c.id !== state.currentCardId);
+            if (pool.length === 0) pool = [...state.cards];
+
+            let dueCards = pool.filter(c => c.dueStep <= step);
+
+            if (dueCards.length === 0) {
+                pool.sort((a, b) => a.dueStep - b.dueStep);
+                dueCards = pool.slice(0, 6);
+            }
+
+            const scoredCards = dueCards.map(card => {
+                const overdueSteps = Math.max(0, step - card.dueStep);
+                const overdueBoost = 1 + (overdueSteps * 0.12);
+                const troubleFactor = 1 + (card.hardCount * 0.35);
+                const finalScore = card.weight * overdueBoost * troubleFactor;
+                return { card, score: finalScore };
+            });
+
+            const totalScore = scoredCards.reduce((sum, item) => sum + item.score, 0);
+            let randomThreshold = Math.random() * totalScore;
+            let chosen = scoredCards[0].card;
+
+            for (const item of scoredCards) {
+                randomThreshold -= item.score;
+                if (randomThreshold <= 0) {
+                    chosen = item.card;
+                    break;
+                }
+            }
+
+            state.currentCardId = chosen.id;
+
+            if (state.direction === 'pl-en') {
+                state.currentCardFrontLang = 'pl';
+            } else if (state.direction === 'en-pl') {
+                state.currentCardFrontLang = 'en';
+            } else {
+                state.currentCardFrontLang = Math.random() < 0.5 ? 'pl' : 'en';
+            }
+
+            saveAllState();
+            renderCurrentCard();
+        }
+
+        /**
+         * Updates card metrics after user rates their knowledge in the active category
+         */
+        function rateCard(rating) {
+            const state = getActiveCatState();
+            const card = state.cards.find(c => c.id === state.currentCardId);
+            if (!card) return;
+
+            state.globalStep += 1;
+            state.sessionReviews += 1;
+            card.attempts += 1;
+
+            if (rating === 'hard') {
+                card.status = 'hard';
+                card.hardCount += 1;
+                card.masteryLevel = 0;
+                card.weight = Math.min(20, 11 + card.hardCount * 1.5);
+                card.dueStep = state.globalStep + 2 + Math.floor(Math.random() * 2);
+            } 
+            else if (rating === 'unsure') {
+                card.status = 'unsure';
+                card.unsureCount += 1;
+                card.masteryLevel = Math.max(0, card.masteryLevel - 1);
+                card.weight = Math.min(14, 6.5 + card.hardCount * 0.8);
+                card.dueStep = state.globalStep + 5 + Math.floor(Math.random() * 2);
+            } 
+            else if (rating === 'known') {
+                card.status = 'known';
+                card.knownCount += 1;
+                card.masteryLevel = Math.min(5, card.masteryLevel + 1);
+
+                const intervalMap = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
+                const baseInterval = intervalMap[card.masteryLevel] || 10;
+                const jitter = Math.floor(Math.random() * 4);
+                card.dueStep = state.globalStep + baseInterval + jitter;
+                card.weight = Math.max(0.45, 2.4 - (card.masteryLevel * 0.4));
+            }
+
+            saveAllState();
+            updateDashboardStats();
+
+            const flashcardInner = document.getElementById('flashcardInner');
+            if (state.isFlipped) {
+                state.isFlipped = false;
+                flashcardInner.classList.remove('rotate-y-180');
+                document.getElementById('ratingButtonsArea').classList.add('hidden');
+                document.getElementById('ratingButtonsArea').classList.remove('grid');
+                document.getElementById('revealPromptArea').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    selectNextCard();
+                }, 180);
+            } else {
+                selectNextCard();
+            }
+        }
+
+        /**
+         * Renders the active card onto the DOM
+         */
+        function renderCurrentCard() {
+            const state = getActiveCatState();
+            const totalInCat = state.cards.length;
+            const card = state.cards.find(c => c.id === state.currentCardId);
+            if (!card) return;
+
+            const isPlFront = state.currentCardFrontLang === 'pl';
+            const frontText = isPlFront ? card.pl : card.en;
+            const backText = isPlFront ? card.en : card.pl;
+
+            document.getElementById('cardNumberBadge').textContent = `#${card.id} / ${totalInCat}`;
+            document.getElementById('frontLangLabel').textContent = isPlFront ? '🇵🇱 Polski' : '🇬🇧 Angielski';
+            document.getElementById('backLangLabel').textContent = isPlFront ? '🇬🇧 Angielski' : '🇵🇱 Polski';
+
+            // Show origin badge when in the combined 80-card category
+            const originBadge = document.getElementById('cardOriginBadge');
+            if (appState.activeCategory === 'combined') {
+                originBadge.textContent = card.origin === 'Podróże' ? '✈️ Podróże' : '🛍️ Zakupy';
+                originBadge.classList.remove('hidden');
+            } else {
+                originBadge.classList.add('hidden');
+            }
+            
+            document.getElementById('frontText').textContent = frontText;
+            document.getElementById('backText').textContent = backText;
+            document.getElementById('backReferenceText').textContent = frontText;
+
+            const frontSpeakBtn = document.getElementById('frontSpeakBtn');
+            if (!isPlFront) {
+                frontSpeakBtn.classList.remove('hidden');
+                frontSpeakBtn.classList.add('flex');
+            } else {
+                frontSpeakBtn.classList.add('hidden');
+                frontSpeakBtn.classList.remove('flex');
+            }
+
+            const badge = document.getElementById('cardReasonBadge');
+            if (card.status === 'new') {
+                badge.textContent = 'Nowy zwrot';
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700';
+            } else if (card.status === 'hard') {
+                badge.textContent = 'Priorytet: Sprawiało trudność';
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700';
+            } else if (card.status === 'unsure') {
+                badge.textContent = 'Powtórka: Niepewne';
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700';
+            } else {
+                badge.textContent = 'Przypomnienie (Utrwalanie)';
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700';
+            }
+
+            const nextLevel = Math.min(5, card.masteryLevel + 1);
+            const nextIntervalMap = { 1: 9, 2: 15, 3: 22, 4: 30, 5: 38 };
+            document.getElementById('hintKnown').textContent = `Przypomnienie za ~${nextIntervalMap[nextLevel]} fiszek`;
+
+            document.getElementById('cardHistoryInfo').textContent = 
+                `Próby: ${card.attempts} • Poziom utrwalenia: ${card.masteryLevel}/5`;
+        }
+
+        /**
+         * Flips the flashcard between front and back
+         */
+        function flipCard() {
+            const state = getActiveCatState();
+            const flashcardInner = document.getElementById('flashcardInner');
+            const revealPromptArea = document.getElementById('revealPromptArea');
+            const ratingButtonsArea = document.getElementById('ratingButtonsArea');
+
+            state.isFlipped = !state.isFlipped;
+
+            if (state.isFlipped) {
+                flashcardInner.classList.add('rotate-y-180');
+                revealPromptArea.classList.add('hidden');
+                ratingButtonsArea.classList.remove('hidden');
+                ratingButtonsArea.classList.add('grid');
+            } else {
+                flashcardInner.classList.remove('rotate-y-180');
+                ratingButtonsArea.classList.add('hidden');
+                ratingButtonsArea.classList.remove('grid');
+                revealPromptArea.classList.remove('hidden');
+            }
+
+            saveAllState();
+        }
+
+        /**
+         * Text-to-Speech (Web Speech API) for English pronunciation
+         */
+        function speakEnglish() {
+            const state = getActiveCatState();
+            const card = state.cards.find(c => c.id === state.currentCardId);
+            if (!card) return;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(card.en);
+                utterance.lang = 'en-GB';
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast('Twoja przeglądarka nie obsługuje syntezatora mowy.');
+            }
+        }
+
+        /**
+         * Updates top dashboard counters, category tabs, and global progress bar
+         */
+        function updateDashboardStats() {
+            const state = getActiveCatState();
+            const total = state.cards.length;
+            const knownCards = state.cards.filter(c => c.status === 'known').length;
+            const hardOrUnsure = state.cards.filter(c => c.status === 'hard' || c.status === 'unsure').length;
+            
+            const totalMasteryPoints = state.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
+            const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
+
+            document.getElementById('statMasteryPercent').textContent = `${masteryPercent}%`;
+            document.getElementById('statKnownCount').textContent = `${knownCards} / ${total}`;
+            document.getElementById('statHardCount').textContent = `${hardOrUnsure}`;
+            document.getElementById('statSessionCount').textContent = `${state.sessionReviews}`;
+            document.getElementById('globalProgressBar').style.width = `${masteryPercent}%`;
+
+            updateCategoryTabsUI();
+        }
+
+        /**
+         * Direction change handler for active category
+         */
+        function changeDirection(newDir) {
+            const state = getActiveCatState();
+            state.direction = newDir;
+            saveAllState();
+            if (state.isFlipped) {
+                flipCard();
+            }
+            selectNextCard();
+        }
+
+        /**
+         * Toggles between Flashcard Study View and Stats/All Phrases List View
+         */
+        function toggleStatsView() {
+            const state = getActiveCatState();
+            const studyView = document.getElementById('studyView');
+            const pausedView = document.getElementById('pausedView');
+            const statsView = document.getElementById('statsView');
+            const btnText = document.getElementById('toggleStatsText');
+
+            const isStatsHidden = statsView.classList.contains('hidden');
+            if (isStatsHidden) {
+                studyView.classList.add('hidden');
+                pausedView.classList.add('hidden');
+                pausedView.classList.remove('flex');
+                statsView.classList.remove('hidden');
+                statsView.classList.add('flex');
+                btnText.textContent = 'Wróć do fiszek';
+                renderPhrasesTable();
+            } else {
+                statsView.classList.add('hidden');
+                statsView.classList.remove('flex');
+                if (state.isPaused) {
+                    pausedView.classList.remove('hidden');
+                    pausedView.classList.add('flex');
+                } else {
+                    studyView.classList.remove('hidden');
+                }
+                btnText.textContent = 'Statystyki i lista';
+                cancelReset();
+            }
+        }
+
+        /**
+         * Pause Study Session for Active Category
+         */
+        function pauseStudy() {
+            const state = getActiveCatState();
+            state.isPaused = true;
+            saveAllState();
+
+            const studyView = document.getElementById('studyView');
+            const statsView = document.getElementById('statsView');
+            const pausedView = document.getElementById('pausedView');
+            const btnText = document.getElementById('toggleStatsText');
+
+            studyView.classList.add('hidden');
+            statsView.classList.add('hidden');
+            statsView.classList.remove('flex');
+            btnText.textContent = 'Statystyki i lista';
+
+            pausedView.classList.remove('hidden');
+            pausedView.classList.add('flex');
+
+            const total = state.cards.length;
+            const totalMasteryPoints = state.cards.reduce((sum, c) => sum + c.masteryLevel, 0);
+            const masteryPercent = Math.round((totalMasteryPoints / (total * 5)) * 100);
+
+            document.getElementById('pausedCategoryName').textContent = CATEGORIES[appState.activeCategory].name;
+            document.getElementById('pausedCardInfo').textContent = `#${state.currentCardId || 1} / ${total}`;
+            document.getElementById('pausedSessionReviews').textContent = `${state.sessionReviews}`;
+            document.getElementById('pausedMasteryPercent').textContent = `${masteryPercent}%`;
+            document.getElementById('pausedTimestamp').textContent = formatTimestamp(state.lastSavedAt);
+        }
+
+        /**
+         * Resume Study Session right where the user left off in the active category
+         */
+        function resumeStudy() {
+            const state = getActiveCatState();
+            state.isPaused = false;
+            saveAllState();
+
+            const pausedView = document.getElementById('pausedView');
+            const studyView = document.getElementById('studyView');
+
+            pausedView.classList.add('hidden');
+            pausedView.classList.remove('flex');
+            studyView.classList.remove('hidden');
+
+            restoreCardUIState();
+            showToast(`Wznowiono (${CATEGORIES[appState.activeCategory].shortName}) od fiszki #${state.currentCardId}`);
+        }
+
+        /**
+         * Restores visual flip state and buttons for the current card
+         */
+        function restoreCardUIState() {
+            const state = getActiveCatState();
+            renderCurrentCard();
+            const flashcardInner = document.getElementById('flashcardInner');
+            const revealPromptArea = document.getElementById('revealPromptArea');
+            const ratingButtonsArea = document.getElementById('ratingButtonsArea');
+
+            if (state.isFlipped) {
+                flashcardInner.classList.add('rotate-y-180');
+                revealPromptArea.classList.add('hidden');
+                ratingButtonsArea.classList.remove('hidden');
+                ratingButtonsArea.classList.add('grid');
+            } else {
+                flashcardInner.classList.remove('rotate-y-180');
+                ratingButtonsArea.classList.add('hidden');
+                ratingButtonsArea.classList.remove('grid');
+                revealPromptArea.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Formats ISO timestamp into readable Polish time/date string
+         */
+        function formatTimestamp(isoString) {
+            if (!isoString) return 'Teraz';
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleString('pl-PL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return 'Zapisano';
+            }
+        }
+
+        function dismissWelcomeBanner() {
+            const banner = document.getElementById('welcomeBackBanner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /**
+         * Backup & Restore Modal Controls
+         */
+        function openBackupModal() {
+            const modal = document.getElementById('backupModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBackupModal() {
+            const modal = document.getElementById('backupModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('importCodeInput').value = '';
+        }
+
+        function getSerializedBackup() {
+            saveAllState();
+            return JSON.stringify({
+                version: 2,
+                exportedAt: new Date().toISOString(),
+                activeCategory: appState.activeCategory,
+                categories: {
+                    travel: appState.categories.travel,
+                    shopping: appState.categories.shopping,
+                    combined: appState.categories.combined
+                }
+            });
+        }
+
+        function downloadBackupFile() {
+            try {
+                const dataStr = getSerializedBackup();
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const datePart = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = `fiszki_angielski_postep_${datePart}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Pobrano plik z kopią zapasową!');
+            } catch (e) {
+                showToast('Błąd podczas tworzenia pliku kopii.');
+            }
+        }
+
+        function copyBackupCode() {
+            try {
+                const raw = getSerializedBackup();
+                // Encode UTF-8 string safely to Base64
+                const encoded = btoa(unescape(encodeURIComponent(raw)));
+                const tempInput = document.createElement('textarea');
+                tempInput.value = encoded;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showToast('Skopiowano kod postępu do schowka!');
+            } catch (e) {
+                showToast('Nie udało się skopiować kodu.');
+            }
+        }
+
+        function applyImportedData(parsed) {
+            if (!parsed) {
+                showToast('Nieprawidłowy format danych kopii zapasowej.');
+                return false;
+            }
+
+            // Support v2 multi-category backup
+            if (parsed.version === 2 && parsed.categories) {
+                appState.activeCategory = CATEGORIES[parsed.activeCategory] ? parsed.activeCategory : 'travel';
+                appState.categories.travel = hydrateCategoryState('travel', parsed.categories.travel);
+                appState.categories.shopping = hydrateCategoryState('shopping', parsed.categories.shopping);
+                appState.categories.combined = hydrateCategoryState('combined', parsed.categories.combined);
+            } 
+            // Support v1 single-category backup (imports into 'travel')
+            else if (Array.isArray(parsed.cards) && parsed.cards.length === 40) {
+                appState.activeCategory = 'travel';
+                appState.categories.travel = hydrateCategoryState('travel', parsed);
+            } else {
+                showToast('Nieprawidłowy format danych kopii zapasowej.');
+                return false;
+            }
+
+            const state = getActiveCatState();
+            state.isPaused = false;
+            document.getElementById('directionSelect').value = state.direction;
+
+            saveAllState();
+            updateDashboardStats();
+            renderPhrasesTable();
+
+            document.getElementById('pausedView').classList.add('hidden');
+            document.getElementById('pausedView').classList.remove('flex');
+            document.getElementById('statsView').classList.add('hidden');
+            document.getElementById('statsView').classList.remove('flex');
+            document.getElementById('studyView').classList.remove('hidden');
+            document.getElementById('toggleStatsText').textContent = 'Statystyki i lista';
+
+            if (state.currentCardId) {
+                restoreCardUIState();
+            } else {
+                selectNextCard();
+            }
+
+            closeBackupModal();
+            showToast('Pomyślnie wczytano postęp wszystkich kategorii!');
+            return true;
+        }
+
+        function handleBackupFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    applyImportedData(parsed);
+                } catch (err) {
+                    showToast('Błąd odczytu pliku JSON.');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function importFromCode() {
+            const code = document.getElementById('importCodeInput').value.trim();
+            if (!code) {
+                showToast('Wklej najpierw kod postępu.');
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(escape(atob(code)));
+                const parsed = JSON.parse(decoded);
+                applyImportedData(parsed);
+            } catch (e) {
+                showToast('Nieprawidłowy kod postępu.');
+            }
+        }
+
+        /**
+         * Filters the phrases table in the Stats View
+         */
+        function setListFilter(filter) {
+            appState.listFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'filter-btn bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer';
+                } else {
+                    btn.className = 'filter-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer';
+                }
+            });
+            renderPhrasesTable();
+        }
+
+        /**
+         * Renders sentences and algorithmic weights/statuses for the currently active category
+         */
+        function renderPhrasesTable() {
+            const state = getActiveCatState();
+            const catMeta = CATEGORIES[appState.activeCategory];
+            const total = state.cards.length;
+
+            document.getElementById('statsViewTitle').textContent = 
+                `Analiza postępów: ${catMeta.name} (${total} zdań)`;
+            document.getElementById('filterAllBtn').textContent = `Wszystkie (${total})`;
+
+            const tbody = document.getElementById('phrasesTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = state.cards.filter(card => {
+                if (appState.listFilter === 'all') return true;
+                return card.status === appState.listFilter;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-slate-400 text-sm">
+                            Brak zwrotów w tej kategorii.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(card => {
+                let statusBadge = '';
+                if (card.status === 'new') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Nowe</span>';
+                } else if (card.status === 'hard') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Nie umiem</span>';
+                } else if (card.status === 'unsure') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Niepewne</span>';
+                } else {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Umiem (${card.masteryLevel}/5)</span>`;
+                }
+
+                let priorityLabel = 'Normalny';
+                if (card.weight >= 9) priorityLabel = '<span class="text-rose-600 font-bold">Bardzo wysoki</span>';
+                else if (card.weight >= 5) priorityLabel = '<span class="text-amber-600 font-semibold">Podwyższony</span>';
+                else if (card.weight <= 1.2) priorityLabel = '<span class="text-emerald-600">Przypominający</span>';
+
+                const originPill = appState.activeCategory === 'combined'
+                    ? `<span class="inline-block mr-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100">${card.origin}</span>`
+                    : '';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-3.5 font-semibold text-slate-400 align-top">${card.id}</td>
+                    <td class="py-3 px-3.5 align-top">
+                        <p class="font-semibold text-slate-800">${originPill}${card.pl}</p>
+                        <p class="text-indigo-700 font-medium mt-0.5">${card.en}</p>
+                    </td>
+                    <td class="py-3 px-3.5 align-top whitespace-nowrap">${statusBadge}</td>
+                    <td class="py-3 px-3.5 align-top text-right whitespace-nowrap text-xs text-slate-500">
+                        <div>Priorytet: ${priorityLabel}</div>
+                        <div class="mt-0.5">Próby: ${card.attempts} (Błędy: ${card.hardCount})</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Two-step progress reset without browser confirm()
+         */
+        function promptReset() {
+            document.getElementById('resetStep1Btn').classList.add('hidden');
+            document.getElementById('resetConfirmBox').classList.remove('hidden');
+            document.getElementById('resetConfirmBox').classList.add('flex');
+        }
+
+        function cancelReset() {
+            document.getElementById('resetConfirmBox').classList.add('hidden');
+            document.getElementById('resetConfirmBox').classList.remove('flex');
+            document.getElementById('resetStep1Btn').classList.remove('hidden');
+        }
+
+        function executeReset() {
+            const activeKey = appState.activeCategory;
+            appState.categories[activeKey] = createInitialCategoryState(activeKey);
+            saveAllState();
+            updateDashboardStats();
+            renderPhrasesTable();
+            cancelReset();
+            selectNextCard();
+            showToast(`Statystyki kategorii „${CATEGORIES[activeKey].name}” zostały wyzerowane.`);
+        }
+
+        /**
+         * Displays a brief toast notification
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toastBanner');
+            toast.textContent = message;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2600);
+        }
+
+        /**
+         * Keyboard Shortcuts Support
+         * Space: Flip card
+         * 1: Nie umiem | 2: Nie jestem pewien | 3: Umiem
+         */
+        document.addEventListener('keydown', (e) => {
+            const state = getActiveCatState();
+            const statsView = document.getElementById('statsView');
+            const backupModal = document.getElementById('backupModal');
+            if (!statsView.classList.contains('hidden')) return;
+            if (!backupModal.classList.contains('hidden')) return;
+            if (state.isPaused) return;
+            if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'INPUT')) return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flipCard();
+            } else if (state.isFlipped) {
+                if (e.key === '1') {
+                    rateCard('hard');
+                } else if (e.key === '2') {
+                    rateCard('unsure');
+                } else if (e.key === '3') {
+                    rateCard('known');
+                }
+            }
+        });
+
+        // Initialize Application on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            const hasSavedProgress = loadAllState();
+            const state = getActiveCatState();
+            document.getElementById('directionSelect').value = state.direction;
+            updateDashboardStats();
+
+            if (hasSavedProgress && state.currentCardId) {
+                const banner = document.getElementById('welcomeBackBanner');
+                banner.classList.remove('hidden');
+                banner.classList.add('flex');
+                document.getElementById('welcomeBackSubtext').textContent = 
+                    `Kategoria: ${CATEGORIES[appState.activeCategory].name} • Fiszka #${state.currentCardId} • Ostatni zapis: ${formatTimestamp(state.lastSavedAt)}`;
+
+                if (state.isPaused) {
+                    pauseStudy();
+                } else {
+                    restoreCardUIState();
+                }
+            } else {
+                selectNextCard();
+            }
+        });
+    </script>
+</body>
+</html>
